@@ -1,6 +1,8 @@
 "use client";
 
-import { use, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+
+import { use, useMemo, useRef, useState, Suspense } from "react";
 import { AlertTriangle, CheckCircle, PackageCheck } from "@untitledui/icons";
 import { Card } from "@/components/app/card";
 import { Empty } from "@/components/app/empty";
@@ -27,8 +29,8 @@ interface ScanLogEntry {
     text: string;
 }
 
-export default function ReceivePOPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params);
+function ReceivePOPage() {
+    const id = useSearchParams().get("id") ?? "";
     const scope = useRequiredScope();
     const po = useAppStore((s) => s.purchaseOrders.find((p) => p.id === id));
     const vendor = useAppStore((s) => s.vendors.find((v) => v.id === po?.vendorId));
@@ -162,7 +164,7 @@ export default function ReceivePOPage({ params }: { params: Promise<{ id: string
                             <StatusBadge status={status} size="lg" />
                         </div>
                         <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-                            <Button size="xl" color="secondary" href={`/purchasing/orders/${po.id}`}>
+                            <Button size="xl" color="secondary" href={`/purchasing/orders/view?id=${po.id}`}>
                                 View PO
                             </Button>
                             <Button size="xl" href="/purchasing/receiving">
@@ -312,5 +314,13 @@ export default function ReceivePOPage({ params }: { params: Promise<{ id: string
                 )}
             </ConfirmDialog>
         </div>
+    );
+}
+
+export default function ReceivePOPageRoute() {
+    return (
+        <Suspense>
+            <ReceivePOPage />
+        </Suspense>
     );
 }

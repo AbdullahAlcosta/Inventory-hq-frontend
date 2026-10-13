@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, Suspense } from "react";
 import { ClipboardCheck } from "@untitledui/icons";
-import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Card, Field } from "@/components/app/card";
 import { Empty } from "@/components/app/empty";
 import { EmployeeName, VariantCell } from "@/components/app/item-cell";
@@ -22,8 +22,8 @@ import { lookupCode } from "@/lib/selectors";
 import { useAppStore } from "@/store/app-store";
 import { cx } from "@/utils/cx";
 
-export default function CountSheetPage() {
-    const { id } = useParams<{ id: string }>();
+function CountSheetPage() {
+    const id = useSearchParams().get("id") ?? "";
     const scope = useRequiredScope();
     const count = useAppStore((s) => s.counts.find((c) => c.id === id));
     const location = useAppStore((s) => s.locations.find((l) => l.id === count?.locationId));
@@ -277,5 +277,13 @@ export default function CountSheetPage() {
                 onConfirm={submit}
             />
         </div>
+    );
+}
+
+export default function CountSheetPageRoute() {
+    return (
+        <Suspense>
+            <CountSheetPage />
+        </Suspense>
     );
 }

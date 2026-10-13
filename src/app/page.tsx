@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { ClientRedirect } from "@/components/app/client-redirect";
 
 export default function Home() {
-    redirect("/dashboard");
+    return <ClientRedirect to="/dashboard" />;
 }

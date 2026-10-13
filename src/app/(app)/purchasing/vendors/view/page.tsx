@@ -1,6 +1,8 @@
 "use client";
 
-import { use, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+
+import { use, useMemo, useState, Suspense } from "react";
 import { Edit05, Mail01, Package, Phone, Plus, ShoppingCart01, User01 } from "@untitledui/icons";
 import { BusinessUnitAvatar } from "@/components/app/bu-avatar";
 import { Card } from "@/components/app/card";
@@ -16,8 +18,8 @@ import { useRequiredScope } from "@/hooks/use-session";
 import { formatCurrency, formatDate, formatNumber } from "@/lib/format";
 import { useAppStore } from "@/store/app-store";
 
-export default function VendorDetailPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params);
+function VendorDetailPage() {
+    const id = useSearchParams().get("id") ?? "";
     const scope = useRequiredScope();
     const vendor = useAppStore((s) => s.vendors.find((v) => v.id === id));
     const products = useAppStore((s) => s.products);
@@ -150,7 +152,7 @@ export default function VendorDetailPage({ params }: { params: Promise<{ id: str
                             {(po) => {
                                 const t = poTotals({ products, variants }, po);
                                 return (
-                                    <Table.Row id={po.id} href={`/purchasing/orders/${po.id}`} className="cursor-pointer">
+                                    <Table.Row id={po.id} href={`/purchasing/orders/view?id=${po.id}`} className="cursor-pointer">
                                         <Table.Cell className="font-semibold whitespace-nowrap text-primary">{po.number}</Table.Cell>
                                         <Table.Cell className="whitespace-nowrap">
                                             <LocationName id={po.warehouseId} />
@@ -197,3 +199,11 @@ const ContactField = ({ icon: Icon, label, value, href }: { icon: React.FC<{ cla
         </div>
     </div>
 );
+
+export default function VendorDetailPageRoute() {
+    return (
+        <Suspense>
+            <VendorDetailPage />
+        </Suspense>
+    );
+}

@@ -127,7 +127,7 @@ export default function InventoryPage() {
                                 </p>
                             </div>
                         </div>
-                        <Button size="md" color="secondary" href={open ? `/stock/counts/${open.id}` : `/stock/counts?start=${l.id}`}>
+                        <Button size="md" color="secondary" href={open ? `/stock/counts/view?id=${open.id}` : `/stock/counts?start=${l.id}`}>
                             {open ? (open.status === "submitted" ? "View count" : `Continue ${open.number}`) : "Start opening count"}
                         </Button>
                     </div>

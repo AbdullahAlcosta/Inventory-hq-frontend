@@ -107,7 +107,7 @@ function ApprovalsView() {
                         <p className="font-semibold text-primary">{pluralize(createdPos.length, "purchase order")} created</p>
                         <p className="mt-0.5 flex flex-wrap gap-x-3 text-tertiary">
                             {createdPos.map((po) => (
-                                <Link key={po.id} href={`/purchasing/orders/${po.id}`} className="font-semibold text-brand-secondary hover:underline">
+                                <Link key={po.id} href={`/purchasing/orders/view?id=${po.id}`} className="font-semibold text-brand-secondary hover:underline">
                                     View {po.number}
                                 </Link>
                             ))}

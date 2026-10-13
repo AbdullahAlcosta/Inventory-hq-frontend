@@ -216,7 +216,7 @@ export const UnexpectedDetail = ({ payload, linkTarget, onLinkTarget, editable }
             <FieldGrid>
                 <Field label="Purchase order">
                     {po ? (
-                        <Link href={`/purchasing/orders/${po.id}`} className="text-brand-secondary hover:underline">
+                        <Link href={`/purchasing/orders/view?id=${po.id}`} className="text-brand-secondary hover:underline">
                             {po.number}
                         </Link>
                     ) : (
@@ -244,7 +244,7 @@ export const UnexpectedDetail = ({ payload, linkTarget, onLinkTarget, editable }
                         </div>
                         <StatusBadge status={product.status} size="sm" />
                     </div>
-                    <Link href={`/catalog/products/${product.id}`} className="text-sm font-semibold text-brand-secondary hover:underline">
+                    <Link href={`/catalog/products/view?id=${product.id}`} className="text-sm font-semibold text-brand-secondary hover:underline">
                         Edit this product
                     </Link>
                 </Section>
@@ -294,7 +294,7 @@ export const PartialPoDetail = ({ payload }: { payload: P<"partial_po"> }) => {
         <>
             <FieldGrid>
                 <Field label="Purchase order">
-                    <Link href={`/purchasing/orders/${po.id}`} className="text-brand-secondary hover:underline">
+                    <Link href={`/purchasing/orders/view?id=${po.id}`} className="text-brand-secondary hover:underline">
                         {po.number}
                     </Link>
                 </Field>
@@ -336,7 +336,7 @@ export const MismatchDetail = ({ payload }: { payload: P<"mismatch"> }) => {
             <FieldGrid>
                 <Field label="Connection">
                     {connection ? (
-                        <Link href={`/channels/connections/${connection.id}`} className="hover:underline">
+                        <Link href={`/channels/connections/view?id=${connection.id}`} className="hover:underline">
                             {connection.name}
                         </Link>
                     ) : (
@@ -395,7 +395,7 @@ export const DuplicateDetail = ({ payload }: { payload: P<"import_duplicate"> })
                             <th className="px-3 py-2 text-left text-xs font-semibold text-quaternary">
                                 Existing ·{" "}
                                 {product ? (
-                                    <Link href={`/catalog/products/${product.id}`} className="text-brand-secondary hover:underline">
+                                    <Link href={`/catalog/products/view?id=${product.id}`} className="text-brand-secondary hover:underline">
                                         {product.name}
                                     </Link>
                                 ) : (
@@ -430,7 +430,7 @@ export const SyncDetail = ({ approval, payload }: { approval: Approval; payload:
             <FieldGrid>
                 <Field label="Connection">
                     {connection ? (
-                        <Link href={`/channels/connections/${connection.id}`} className="hover:underline">
+                        <Link href={`/channels/connections/view?id=${connection.id}`} className="hover:underline">
                             {connection.name}
                         </Link>
                     ) : (

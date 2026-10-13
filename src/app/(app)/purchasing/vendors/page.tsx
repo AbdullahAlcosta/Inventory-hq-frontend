@@ -80,7 +80,7 @@ export default function VendorsPage() {
                         </Table.Header>
                         <Table.Body items={rows}>
                             {(row) => (
-                                <Table.Row id={row.id} href={`/purchasing/vendors/${row.id}`} className="cursor-pointer">
+                                <Table.Row id={row.id} href={`/purchasing/vendors/view?id=${row.id}`} className="cursor-pointer">
                                     <Table.Cell>
                                         <span className="block font-medium whitespace-nowrap text-primary">{row.vendor.name}</span>
                                         {row.vendor.notes && <span className="block max-w-xs truncate text-xs text-tertiary">{row.vendor.notes}</span>}

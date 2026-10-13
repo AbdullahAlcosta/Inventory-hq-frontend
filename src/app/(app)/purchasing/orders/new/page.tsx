@@ -77,7 +77,7 @@ function NewPurchaseOrder() {
         if (errors.length || !vendorId || !warehouseId) return;
         const id = createPurchaseOrder({ vendorId, warehouseId, lines, notes: notes.trim() });
         toast.success("Purchase order created", "Mark it as sent once you’ve placed the order with the vendor.");
-        router.push(`/purchasing/orders/${id}`);
+        router.push(`/purchasing/orders/view?id=${id}`);
     };
 
     return (

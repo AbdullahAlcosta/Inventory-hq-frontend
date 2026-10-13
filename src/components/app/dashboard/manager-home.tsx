@@ -130,7 +130,7 @@ export const ManagerHome = ({ scope }: { scope: Scope }) => {
                         <ul className="divide-y divide-secondary">
                             {connections.map((c) => (
                                 <li key={c.id}>
-                                    <Link href={`/channels/connections/${c.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-primary_hover md:px-6">
+                                    <Link href={`/channels/connections/view?id=${c.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-primary_hover md:px-6">
                                         <ChannelLogo channel={c.channel} size="sm" />
                                         <div className="min-w-0 flex-1">
                                             <p className="truncate text-sm font-medium text-primary">{c.name}</p>

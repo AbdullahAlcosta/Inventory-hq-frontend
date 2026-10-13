@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { Archive, Edit05, LinkExternal01, Package, Plus, RefreshCcw01 } from "@untitledui/icons";
 import { BusinessUnitAvatar } from "@/components/app/bu-avatar";
 import { Card, Field } from "@/components/app/card";
@@ -29,7 +29,7 @@ import type { Product, Variant } from "@/lib/types";
 import { useAppStore } from "@/store/app-store";
 import { cx } from "@/utils/cx";
 
-export default function ProductDetailPage() {
+function ProductDetailPage() {
     return (
         <Suspense fallback={null}>
             <ProductDetail />
@@ -39,7 +39,7 @@ export default function ProductDetailPage() {
 
 function ProductDetail() {
     const scope = useRequiredScope();
-    const { id } = useParams<{ id: string }>();
+    const id = useSearchParams().get("id") ?? "";
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -69,7 +69,7 @@ function ProductDetail() {
         if (get("cost")) initial.cost = get("cost");
         setTab("variants");
         setVariantModal({ open: true, variant: null, initial });
-        router.replace(pathname);
+        router.replace(`${pathname}?id=${id}`);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams]);
 
@@ -471,7 +471,7 @@ const ChannelsTab = ({ product, variants, scope }: { product: Product; variants:
                         }
                         description={`${channelNames[c.channel]} · ${c.level === "store" ? "Store level" : "Business unit level"} · ${c.syncMode === "live" ? "Live sync" : c.schedule} · Buffer ${c.safetyBuffer}`}
                         actions={
-                            <Button color="secondary" size="sm" iconTrailing={LinkExternal01} href={`/channels/connections/${c.id}`}>
+                            <Button color="secondary" size="sm" iconTrailing={LinkExternal01} href={`/channels/connections/view?id=${c.id}`}>
                                 Open connection
                             </Button>
                         }
@@ -506,3 +506,11 @@ const ChannelsTab = ({ product, variants, scope }: { product: Product; variants:
         </div>
     );
 };
+
+export default function ProductDetailPageRoute() {
+    return (
+        <Suspense>
+            <ProductDetailPage />
+        </Suspense>
+    );
+}

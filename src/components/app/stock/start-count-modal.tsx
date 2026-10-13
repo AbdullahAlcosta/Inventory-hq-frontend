@@ -68,7 +68,7 @@ const StartCountForm = ({ isOpen, onOpenChange, locationId: initialLocation }: S
         const id = startCount(locationId, selected, kind);
         toast.success(`${kind === "opening" ? "Opening" : "Cycle"} count started`, `${pluralize(selected.length, "item")} at ${location?.name}.`);
         onOpenChange(false);
-        router.push(`/stock/counts/${id}`);
+        router.push(`/stock/counts/view?id=${id}`);
     };
 
     return (

@@ -106,7 +106,7 @@ export default function StoreRequestsPage() {
                         </Table.Header>
                         <Table.Body items={rows}>
                             {(row) => (
-                                <Table.Row id={row.id} href={`/replenishment/requests/${row.id}`} className="cursor-pointer">
+                                <Table.Row id={row.id} href={`/replenishment/requests/view?id=${row.id}`} className="cursor-pointer">
                                     <Table.Cell className="font-semibold whitespace-nowrap text-primary">{row.r.number}</Table.Cell>
                                     <Table.Cell className="whitespace-nowrap text-primary">
                                         <LocationName id={row.r.storeId} />

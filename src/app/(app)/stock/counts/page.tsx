@@ -118,7 +118,7 @@ function Counts() {
                                 const counted = c.lines.filter((l) => l.countedQty !== null).length;
                                 const variances = c.lines.filter((l) => l.countedQty !== null && l.countedQty !== l.systemQty).length;
                                 return (
-                                    <Table.Row id={c.id} href={`/stock/counts/${c.id}`} className="cursor-pointer">
+                                    <Table.Row id={c.id} href={`/stock/counts/view?id=${c.id}`} className="cursor-pointer">
                                         <Table.Cell className="font-semibold whitespace-nowrap text-primary">{c.number}</Table.Cell>
                                         <Table.Cell className="whitespace-nowrap">
                                             <LocationName id={c.locationId} />

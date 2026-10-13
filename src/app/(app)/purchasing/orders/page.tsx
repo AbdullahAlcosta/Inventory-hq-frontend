@@ -92,7 +92,7 @@ export default function PurchaseOrdersPage() {
                         </Table.Header>
                         <Table.Body items={rows}>
                             {(row) => (
-                                <Table.Row id={row.id} href={`/purchasing/orders/${row.id}`} className="cursor-pointer">
+                                <Table.Row id={row.id} href={`/purchasing/orders/view?id=${row.id}`} className="cursor-pointer">
                                     <Table.Cell>
                                         <div className="flex items-center gap-2">
                                             <span className="font-semibold whitespace-nowrap text-primary">{row.po.number}</span>

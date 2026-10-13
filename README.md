@@ -14,8 +14,17 @@ across Alcosta's businesses (Smoke Shops, Apparel, Skates, Pokémon). Built with
 ```bash
 npm install
 npm run dev        # http://localhost:3000
-npm run build      # production build
+npm run build      # static export to ./out
 ```
+
+## Deploy (GitHub Pages)
+
+The app is a fully static export (`output: "export"` in `next.config.mjs`), so it can be hosted on GitHub Pages.
+`.github/workflows/deploy-pages.yml` builds it and publishes `out/` on every push to `main` or `feature/static-mvp-frontend`.
+
+One-time setup: **Settings → Pages → Build and deployment → Source: GitHub Actions**. (With "Deploy from a branch"
+GitHub only shows this README.) The site is served at `https://<owner>.github.io/<repo>/`; the workflow sets
+`NEXT_PUBLIC_BASE_PATH=/<repo>` so links and assets work under that path.
 
 Sign in by picking a demo account. Each one shows the app through a different role and assignment:
 

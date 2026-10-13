@@ -1,6 +1,10 @@
 "use client";
 
-import { use, useMemo, useState } from "react";
+import Link from "next/link";
+
+import { useSearchParams } from "next/navigation";
+
+import { use, useMemo, useState, Suspense } from "react";
 import { AlertTriangle, Download01, Edit05, Printer, Scan, Send01 } from "@untitledui/icons";
 import { Card, Field } from "@/components/app/card";
 import { Empty } from "@/components/app/empty";
@@ -20,8 +24,8 @@ import { useRequiredScope } from "@/hooks/use-session";
 import { formatCurrency, formatDateTime, formatNumber, pluralize } from "@/lib/format";
 import { useAppStore } from "@/store/app-store";
 
-export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params);
+function PurchaseOrderDetailPage() {
+    const id = useSearchParams().get("id") ?? "";
     const scope = useRequiredScope();
     const po = useAppStore((s) => s.purchaseOrders.find((p) => p.id === id));
     const vendor = useAppStore((s) => s.vendors.find((v) => v.id === po?.vendorId));
@@ -112,7 +116,7 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
                             </>
                         )}
                         {canReceive && (
-                            <Button size="lg" iconLeading={Scan} href={`/purchasing/receiving/${po.id}`}>
+                            <Button size="lg" iconLeading={Scan} href={`/purchasing/receiving/view?id=${po.id}`}>
                                 Receive
                             </Button>
                         )}
@@ -138,9 +142,9 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
                             {partialApproval?.summary ?? "Some lines arrived short."}{" "}
                             {partialApproval &&
                                 (scope.canManage ? (
-                                    <a href={`/approvals?id=${partialApproval.id}`} className="font-semibold text-primary underline">
+                                    <Link href={`/approvals?id=${partialApproval.id}`} className="font-semibold text-primary underline">
                                         Open the Approvals item
-                                    </a>
+                                    </Link>
                                 ) : (
                                     "A manager will resolve it."
                                 ))}
@@ -151,7 +155,7 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
 
             <Card>
                 <dl className="grid grid-cols-2 gap-5 lg:grid-cols-4">
-                    <Field label="Vendor">{vendor ? <a href={`/purchasing/vendors/${vendor.id}`} className="hover:underline">{vendor.name}</a> : "—"}</Field>
+                    <Field label="Vendor">{vendor ? <Link href={`/purchasing/vendors/view?id=${vendor.id}`} className="hover:underline">{vendor.name}</Link> : "—"}</Field>
                     <Field label="Destination warehouse">
                         <LocationName id={po.warehouseId} />
                     </Field>
@@ -286,5 +290,13 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
                 }}
             />
         </div>
+    );
+}
+
+export default function PurchaseOrderDetailPageRoute() {
+    return (
+        <Suspense>
+            <PurchaseOrderDetailPage />
+        </Suspense>
     );
 }

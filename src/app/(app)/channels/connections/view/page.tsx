@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, Suspense } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { RefreshCw01, SearchLg, UploadCloud02 } from "@untitledui/icons";
 import type { Selection } from "react-aria-components";
 import { Table, TableCard } from "@/components/application/table/table";
@@ -69,8 +69,8 @@ const SettingsCard = ({ connection }: { connection: ChannelConnection }) => {
     );
 };
 
-export default function ConnectionDetailPage() {
-    const { id } = useParams<{ id: string }>();
+function ConnectionDetailPage() {
+    const id = useSearchParams().get("id") ?? "";
     const scope = useRequiredScope();
     const scoped = useScopedConnections(scope);
     const connection = scoped.find((c) => c.id === id);
@@ -293,5 +293,13 @@ export default function ConnectionDetailPage() {
                 </div>
             </div>
         </>
+    );
+}
+
+export default function ConnectionDetailPageRoute() {
+    return (
+        <Suspense>
+            <ConnectionDetailPage />
+        </Suspense>
     );
 }

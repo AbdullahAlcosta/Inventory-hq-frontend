@@ -226,7 +226,7 @@ const ReviewBody = ({ approval, onClose, onPosCreated }: { approval: Approval; o
                             <Field label="Decided at">{approval.decidedAt ? formatDateTime(approval.decidedAt) : "—"}</Field>
                             {createdPo && (
                                 <Field label="Purchase order">
-                                    <Link href={`/purchasing/orders/${createdPo.id}`} className="text-brand-secondary hover:underline">
+                                    <Link href={`/purchasing/orders/view?id=${createdPo.id}`} className="text-brand-secondary hover:underline">
                                         {createdPo.number}
                                     </Link>
                                 </Field>

@@ -358,7 +358,7 @@ export default function ImportPage() {
                                                             <p className="text-xs text-tertiary">
                                                                 {r.match ? (
                                                                     <>
-                                                                        <Link href={`/catalog/products/${r.match.product.id}`} className="font-medium text-secondary hover:underline">
+                                                                        <Link href={`/catalog/products/view?id=${r.match.product.id}`} className="font-medium text-secondary hover:underline">
                                                                             {r.match.product.name}
                                                                             {r.match.variant && ` — ${r.match.variant.name}`}
                                                                         </Link>

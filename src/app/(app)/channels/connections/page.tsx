@@ -30,7 +30,7 @@ const ConnectionCard = ({ connection }: { connection: ChannelConnection }) => {
 
     return (
         <Link
-            href={`/channels/connections/${connection.id}`}
+            href={`/channels/connections/view?id=${connection.id}`}
             className="group flex flex-col rounded-2xl bg-primary p-5 shadow-xs ring-1 ring-secondary outline-hidden transition duration-100 ease-linear hover:ring-gray-300 focus-visible:ring-2 focus-visible:ring-brand"
         >
             <div className="flex items-start gap-3">

@@ -123,13 +123,13 @@ export default function NewProductPage() {
             namedRows.map((r) => variantFromDraft({ ...r, sku: effSku(r) }, bu.attributeKeys[0] ? { [bu.attributeKeys[0]]: r.name.trim() } : {})),
         );
         toast.success("Product created", `${p.name} with ${namedRows.length} variant${namedRows.length === 1 ? "" : "s"}`);
-        router.push(`/catalog/products/${id}`);
+        router.push(`/catalog/products/view?id=${id}`);
     };
 
     const addAllTo = (target: Product) => {
         namedRows.forEach((r) => addVariant(target.id, variantFromDraft({ ...r, sku: effSku(r) }, bu?.attributeKeys[0] ? { [bu.attributeKeys[0]]: r.name.trim() } : {})));
         toast.success(`Added ${namedRows.length} variant${namedRows.length === 1 ? "" : "s"}`, `to ${target.name}`);
-        router.push(`/catalog/products/${target.id}`);
+        router.push(`/catalog/products/view?id=${target.id}`);
     };
 
     const openAsVariant = (target: Product) => {
@@ -141,7 +141,7 @@ export default function NewProductPage() {
         if (r.caseBarcode.trim()) params.set("caseUpc", r.caseBarcode.trim());
         if (r.price) params.set("price", r.price);
         if (r.cost) params.set("cost", r.cost);
-        router.push(`/catalog/products/${target.id}?${params.toString()}`);
+        router.push(`/catalog/products/view?id=${target.id}&${params.toString()}`);
     };
 
     if (!scope.canManage) {
@@ -276,7 +276,7 @@ export default function NewProductPage() {
                                             title="Already in the catalog"
                                             description="This variant, SKU or barcode already exists. You can't save a duplicate — open the existing item instead."
                                             renderActions={(m) => (
-                                                <Button color="secondary" size="sm" href={`/catalog/products/${m.product.id}`}>
+                                                <Button color="secondary" size="sm" href={`/catalog/products/view?id=${m.product.id}`}>
                                                     Open
                                                 </Button>
                                             )}

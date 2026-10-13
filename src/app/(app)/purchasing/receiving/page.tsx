@@ -62,7 +62,7 @@ export default function ReceivingPage() {
                             return (
                                 <Link
                                     key={po.id}
-                                    href={`/purchasing/receiving/${po.id}`}
+                                    href={`/purchasing/receiving/view?id=${po.id}`}
                                     className="group flex flex-col gap-4 rounded-2xl bg-primary p-5 shadow-xs ring-1 ring-secondary transition hover:ring-gray-400 focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:outline-hidden md:p-6"
                                 >
                                     <div className="flex items-start justify-between gap-3">
@@ -130,7 +130,7 @@ export default function ReceivingPage() {
                                 {(po) => {
                                     const t = poTotals(data, po);
                                     return (
-                                        <Table.Row id={po.id} href={`/purchasing/orders/${po.id}`} className="cursor-pointer">
+                                        <Table.Row id={po.id} href={`/purchasing/orders/view?id=${po.id}`} className="cursor-pointer">
                                             <Table.Cell className="font-semibold whitespace-nowrap text-primary">{po.number}</Table.Cell>
                                             <Table.Cell className="whitespace-nowrap">{vendors.find((v) => v.id === po.vendorId)?.name}</Table.Cell>
                                             <Table.Cell className="whitespace-nowrap">

@@ -52,7 +52,7 @@ export const DuplicateList = ({ matches, title, description, renderActions, tone
                                 <div className="flex min-w-60 flex-1 items-center gap-3">
                                     <ProductSwatch color={m.product.imageColor} name={m.product.brand} size="sm" />
                                     <div className="min-w-0">
-                                        <Link href={`/catalog/products/${m.product.id}`} className="block truncate text-sm font-semibold text-primary hover:underline">
+                                        <Link href={`/catalog/products/view?id=${m.product.id}`} className="block truncate text-sm font-semibold text-primary hover:underline">
                                             {m.product.name}
                                             {m.variant && <span className="font-normal text-tertiary"> — {m.variant.name}</span>}
                                         </Link>

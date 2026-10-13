@@ -52,7 +52,7 @@ const RequestList = ({ requests, empty, side }: { requests: StoreRequest[]; empt
         <ul className="divide-y divide-secondary">
             {requests.map((r) => (
                 <li key={r.id}>
-                    <Link href={`/replenishment/requests/${r.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-primary_hover md:px-6">
+                    <Link href={`/replenishment/requests/view?id=${r.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-primary_hover md:px-6">
                         <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold text-primary">{r.number}</p>
                             <p className="truncate text-xs text-tertiary">
@@ -121,7 +121,7 @@ export const StoreAssociateHome = ({ scope }: { scope: Scope }) => {
                     {
                         label: "Confirm delivery",
                         description: incoming.length ? `${pluralize(incoming.length, "shipment")} arrived?` : "Nothing in transit",
-                        href: incoming[0] ? `/replenishment/requests/${incoming[0].id}` : "/replenishment/requests",
+                        href: incoming[0] ? `/replenishment/requests/view?id=${incoming[0].id}` : "/replenishment/requests",
                         icon: PackageCheck,
                     },
                 ]}
@@ -181,7 +181,7 @@ export const WarehouseAssociateHome = ({ scope }: { scope: Scope }) => {
                         <ul className="divide-y divide-secondary">
                             {toReceive.map((p) => (
                                 <li key={p.id}>
-                                    <Link href={`/purchasing/receiving/${p.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-primary_hover md:px-6">
+                                    <Link href={`/purchasing/receiving/view?id=${p.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-primary_hover md:px-6">
                                         <div className="min-w-0 flex-1">
                                             <p className="text-sm font-semibold text-primary">{p.number}</p>
                                             <p className="truncate text-xs text-tertiary">

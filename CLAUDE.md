@@ -22,6 +22,9 @@ Back-office app for products, stock, purchasing, store replenishment, sales-chan
 - Look & feel follows SugrPay: dark sidebar, light gray page (`bg-secondary`), white rounded cards, black primary buttons,
   black/white pill filters, dotted status badges, slideouts for review, typed confirmations for bulk actions.
 - File names are kebab-case.
+- The app is a static export (GitHub Pages). No dynamic `[id]` routes and no server features: detail pages are
+  `.../view?id=<id>` and read the id with `useSearchParams()` inside a `<Suspense>` boundary. Use `next/link` or
+  `router.push` for internal links (they add the base path), never a plain `<a href="/...">`.
 
 ---
 

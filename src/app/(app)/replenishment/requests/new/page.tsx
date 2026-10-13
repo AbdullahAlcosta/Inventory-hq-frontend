@@ -98,7 +98,7 @@ function NewStoreRequest() {
         if (errors.length || !storeId) return;
         const id = createStoreRequest({ storeId, lines, note: note.trim() });
         toast.success("Request sent to the warehouse", `${lines.length} item${lines.length === 1 ? "" : "s"} · ${totalUnits} units`);
-        router.push(`/replenishment/requests/${id}`);
+        router.push(`/replenishment/requests/view?id=${id}`);
     };
 
     return (

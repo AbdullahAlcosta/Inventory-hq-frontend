@@ -1,6 +1,8 @@
 "use client";
 
-import { use, useState } from "react";
+import { useSearchParams } from "next/navigation";
+
+import { use, useState, Suspense } from "react";
 import { AlertTriangle, CheckCircle, Package, PackageCheck, Truck01 } from "@untitledui/icons";
 import { Card, Field } from "@/components/app/card";
 import { Empty } from "@/components/app/empty";
@@ -21,8 +23,8 @@ import { cx } from "@/utils/cx";
 
 type Mode = null | "pick" | "confirm";
 
-export default function StoreRequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params);
+function StoreRequestDetailPage() {
+    const id = useSearchParams().get("id") ?? "";
     const scope = useRequiredScope();
     const r = useAppStore((s) => s.storeRequests.find((x) => x.id === id));
     const products = useAppStore((s) => s.products);
@@ -290,3 +292,11 @@ const ShortList = ({ items }: { items: { id: string; label: string; got: number;
         ))}
     </ul>
 );
+
+export default function StoreRequestDetailPageRoute() {
+    return (
+        <Suspense>
+            <StoreRequestDetailPage />
+        </Suspense>
+    );
+}

@@ -145,7 +145,7 @@ export default function ProductsPage() {
                         }
                     />
                 ) : (
-                    <Table aria-label="Products" size="sm" onRowAction={(key) => router.push(`/catalog/products/${key}`)}>
+                    <Table aria-label="Products" size="sm" onRowAction={(key) => router.push(`/catalog/products/view?id=${key}`)}>
                         <Table.Header>
                             <Table.Head label="Product" isRowHeader />
                             <Table.Head label="Business unit" />

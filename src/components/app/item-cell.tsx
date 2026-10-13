@@ -35,7 +35,7 @@ export const VariantCell = ({ variantId, link = true, showSku = true }: { varian
             <ProductSwatch color={product.imageColor} name={product.brand} size="sm" />
             <div className="min-w-0">
                 {link ? (
-                    <Link href={`/catalog/products/${product.id}`} className="hover:underline">
+                    <Link href={`/catalog/products/view?id=${product.id}`} className="hover:underline">
                         {title}
                     </Link>
                 ) : (
