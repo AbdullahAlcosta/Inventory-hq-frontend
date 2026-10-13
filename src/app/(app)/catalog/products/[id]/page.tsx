@@ -281,7 +281,7 @@ const VariantsTab = ({ product, variants, canManage, onEdit, onAdd }: { product:
             </Card>
         );
     return (
-        <TableCard.Root className="rounded-2xl">
+        <TableCard.Root size="sm" className="rounded-2xl">
             <Table aria-label="Variants" size="sm">
                 <Table.Header>
                     <Table.Head label="Variant" isRowHeader />
@@ -377,7 +377,7 @@ const StockTab = ({ variants, scope, productBu }: { variants: Variant[]; scope: 
 
     return (
         <div className="flex flex-col gap-6">
-            <TableCard.Root className="rounded-2xl">
+            <TableCard.Root size="sm" className="rounded-2xl">
                 <TableCard.Header title="By location" description="Only Available is sellable." />
                 <Table aria-label="Stock by location" size="sm">
                     <Table.Header>
@@ -407,7 +407,7 @@ const StockTab = ({ variants, scope, productBu }: { variants: Variant[]; scope: 
 
             <div className="flex flex-col gap-3">
                 <FilterPills value={loc} onChange={setLoc} options={[{ id: "all", label: "All locations" }, ...locations.map((l) => ({ id: l.id, label: l.name }))]} />
-                <TableCard.Root className="rounded-2xl">
+                <TableCard.Root size="sm" className="rounded-2xl">
                     <Table aria-label="Stock by variant" size="sm">
                         <Table.Header>
                             <Table.Head label="Variant" isRowHeader />

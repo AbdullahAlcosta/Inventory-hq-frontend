@@ -184,7 +184,7 @@ function NewStoreRequest() {
 
             <div className="fixed inset-x-0 bottom-0 z-10 flex items-center justify-between gap-3 border-t border-secondary bg-primary px-4 py-3 md:static md:rounded-2xl md:px-6 md:py-4 md:ring-1 md:ring-secondary">
                 <p className="text-sm text-tertiary">
-                    <span className="font-semibold text-primary">{lines.length}</span> item{lines.length === 1 ? "" : "s"} · <span className="font-semibold text-primary">{formatNumber(totalUnits)}</span> units
+                    <span className="font-semibold text-primary">{lines.length}</span> item{lines.length === 1 ? "" : "s"} · <span className="font-semibold text-primary">{formatNumber(totalUnits)}</span> unit{totalUnits === 1 ? "" : "s"}
                 </p>
                 <div className="flex gap-3">
                     <Button color="secondary" size="lg" href="/replenishment/requests" className="hidden sm:inline-flex">

@@ -130,7 +130,7 @@ export default function ProductsPage() {
                 </div>
             </div>
 
-            <TableCard.Root className="rounded-2xl">
+            <TableCard.Root size="sm" className="rounded-2xl">
                 {visible.length === 0 ? (
                     <Empty
                         icon={Package}
@@ -149,7 +149,6 @@ export default function ProductsPage() {
                         <Table.Header>
                             <Table.Head label="Product" isRowHeader />
                             <Table.Head label="Business unit" />
-                            <Table.Head label="Type" />
                             <Table.Head label="Variants" />
                             <Table.Head label="Price" />
                             <Table.Head label="Available" tooltip="Sellable units across your locations" />
@@ -164,7 +163,10 @@ export default function ProductsPage() {
                                         <Table.Cell>
                                             <div className="flex min-w-52 items-center gap-3">
                                                 <ProductSwatch color={r.product.imageColor} name={r.product.brand} />
-                                                <p className="text-sm font-semibold text-primary">{r.product.name}</p>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-semibold text-primary">{r.product.name}</p>
+                                                    <p className="text-xs text-tertiary">{r.product.productType}</p>
+                                                </div>
                                             </div>
                                         </Table.Cell>
                                         <Table.Cell>
@@ -173,7 +175,6 @@ export default function ProductsPage() {
                                                 <span className="text-secondary">{bu?.name}</span>
                                             </div>
                                         </Table.Cell>
-                                        <Table.Cell className="whitespace-nowrap">{r.product.productType}</Table.Cell>
                                         <Table.Cell className="tabular-nums">{r.variants.length}</Table.Cell>
                                         <Table.Cell className="whitespace-nowrap tabular-nums">
                                             {r.range ? (r.range.min === r.range.max ? formatCurrency(r.range.min) : `${formatCurrency(r.range.min)} – ${formatCurrency(r.range.max)}`) : "—"}
@@ -182,8 +183,8 @@ export default function ProductsPage() {
                                             <span className={cx("font-semibold tabular-nums", r.available === 0 ? "text-error-primary" : "text-primary")}>{formatNumber(r.available)}</span>
                                         </Table.Cell>
                                         <Table.Cell>
-                                            <div className="min-w-36">
-                                                <ComplianceChips flags={r.product.complianceFlags} max={2} />
+                                            <div className="min-w-32">
+                                                <ComplianceChips flags={r.product.complianceFlags} max={1} />
                                             </div>
                                         </Table.Cell>
                                         <Table.Cell>

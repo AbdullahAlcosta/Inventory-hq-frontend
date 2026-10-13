@@ -42,7 +42,9 @@ const DAY = 24 * 60 * 60 * 1000;
 export const daysAgo = (d: number, hour = 10) => {
     const date = new Date(Date.now() - d * DAY);
     date.setHours(hour, randInt(0, 59), 0, 0);
-    return date.toISOString();
+    // Never return a time in the future (e.g. "today at 6 PM" when it's morning).
+    const latest = Date.now() - (d === 0 ? (hour % 5) * 15 * 60 * 1000 + 5 * 60 * 1000 : 0);
+    return new Date(Math.min(date.getTime(), latest)).toISOString();
 };
 const upc = () => Array.from({ length: 12 }, () => randInt(0, 9)).join("");
 

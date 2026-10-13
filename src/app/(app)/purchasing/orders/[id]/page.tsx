@@ -17,7 +17,7 @@ import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { TextArea } from "@/components/base/textarea/textarea";
 import { useRequiredScope } from "@/hooks/use-session";
-import { formatCurrency, formatDateTime, formatNumber } from "@/lib/format";
+import { formatCurrency, formatDateTime, formatNumber, pluralize } from "@/lib/format";
 import { useAppStore } from "@/store/app-store";
 
 export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -161,7 +161,7 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
                     <Field label="Total cost">
                         <span className="tabular-nums">{formatCurrency(totals.cost)}</span>
                         <span className="block text-sm font-normal text-tertiary">
-                            {totals.lines} lines · {formatNumber(totals.units)} units
+                            {pluralize(totals.lines, "line")} · {formatNumber(totals.units)} units
                         </span>
                     </Field>
                 </dl>

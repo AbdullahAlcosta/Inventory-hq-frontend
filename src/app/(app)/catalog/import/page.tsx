@@ -137,6 +137,7 @@ export default function ImportPage() {
         toast.success("Import finished", `${summary.created} created · ${summary.sentToApprovals} sent to Approvals`);
         setText("");
         setFileName(null);
+        window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
     const clear = () => {
@@ -302,7 +303,7 @@ export default function ImportPage() {
                                 <StatCard label="Not imported" value={notImported} hint="Missing or repeated" />
                             </div>
 
-                            <TableCard.Root className="rounded-2xl">
+                            <TableCard.Root size="sm" className="rounded-2xl">
                                 <TableCard.Header
                                     title="2. Review"
                                     description="Each row is checked against the catalog. Likely duplicates are never merged automatically."
