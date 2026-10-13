@@ -371,12 +371,15 @@ export const useAppStore = create<AppState>()(
             importProducts: (businessUnitId, rows, fileName) => {
                 const summary: ImportSummary = { created: 0, sentToApprovals: 0, skipped: 0 };
                 set((s) => {
+                    // Products created by this import are grouped below, not flagged as duplicates of themselves.
+                    const createdHere = new Set<string>();
                     rows.forEach((row) => {
                         if (!row.brand || !row.productLine) {
                             summary.skipped++;
                             return;
                         }
-                        const dupes = findDuplicates(s, { businessUnitId, brand: row.brand, productLine: row.productLine, variant: row.variant, sku: row.sku, upc: row.upc });
+                        const existingData = { products: s.products.filter((p) => !createdHere.has(p.id)), variants: s.variants.filter((v) => !createdHere.has(v.productId)) };
+                        const dupes = findDuplicates(existingData, { businessUnitId, brand: row.brand, productLine: row.productLine, variant: row.variant, sku: row.sku, upc: row.upc });
                         if (dupes.length) {
                             const d = dupes[0];
                             addApproval(s, {
@@ -395,7 +398,7 @@ export const useAppStore = create<AppState>()(
                         if (existing) {
                             s.variants.push({ ...defaultVariant(row), id: uid("v"), productId: existing.id });
                         } else {
-                            createProductDraft(
+                            const newId = createProductDraft(
                                 s,
                                 {
                                     businessUnitId,
@@ -411,6 +414,7 @@ export const useAppStore = create<AppState>()(
                                 },
                                 [defaultVariant(row)],
                             );
+                            createdHere.add(newId);
                         }
                         summary.created++;
                     });
