@@ -183,7 +183,7 @@ export default function ProductsPage() {
                                             <span className={cx("font-semibold tabular-nums", r.available === 0 ? "text-error-primary" : "text-primary")}>{formatNumber(r.available)}</span>
                                         </Table.Cell>
                                         <Table.Cell>
-                                            <div className="min-w-32">
+                                            <div className="min-w-44">
                                                 <ComplianceChips flags={r.product.complianceFlags} max={1} />
                                             </div>
                                         </Table.Cell>
