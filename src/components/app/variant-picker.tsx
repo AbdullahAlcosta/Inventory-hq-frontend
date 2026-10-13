@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { Key } from "react-aria-components";
 import { Select } from "@/components/base/select/select";
 import { useAppStore } from "@/store/app-store";
@@ -23,6 +23,9 @@ interface VariantPickerProps {
 export const VariantPicker = ({ businessUnitIds, exclude = [], filter, onSelect, label, placeholder = "Search products or SKU…", size = "md", className }: VariantPickerProps) => {
     const products = useAppStore((s) => s.products);
     const variants = useAppStore((s) => s.variants);
+    // Controlled so the field clears (and the list closes) after each pick.
+    const [inputValue, setInputValue] = useState("");
+    const [resetKey, setResetKey] = useState(0);
 
     const items = useMemo(
         () =>
@@ -41,13 +44,21 @@ export const VariantPicker = ({ businessUnitIds, exclude = [], filter, onSelect,
     return (
         <div className={className}>
             <Select.ComboBox
+                key={resetKey}
+                inputValue={inputValue}
+                onInputChange={setInputValue}
                 label={label}
                 placeholder={placeholder}
                 items={items}
                 size={size}
                 shortcut={false}
                 selectedKey={null}
-                onSelectionChange={(key: Key | null) => key && onSelect(String(key))}
+                onSelectionChange={(key: Key | null) => {
+                    if (!key) return;
+                    onSelect(String(key));
+                    setInputValue("");
+                    setResetKey((k) => k + 1);
+                }}
             >
                 {(item) => (
                     <Select.Item id={item.id} supportingText={item.supportingText} textValue={`${item.label} ${item.supportingText}`}>
