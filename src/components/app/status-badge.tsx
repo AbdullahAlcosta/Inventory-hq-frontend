@@ -11,6 +11,7 @@ const map: Record<string, { label: string; color: Color }> = {
     complete: { label: "Complete", color: "success" },
     resolved: { label: "Resolved", color: "success" },
     // Store requests (PRD §9.2)
+    pending_approval: { label: "Awaiting Warehouse Approval", color: "orange" },
     requested: { label: "Requested", color: "gray" },
     picked: { label: "Picked", color: "blue" },
     packed: { label: "Packed", color: "indigo" },

@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { ClipboardCheck, Copy06, Edit05, LinkBroken01, PackageX, RefreshCw01, Repeat04, Scan } from "@untitledui/icons";
+import { ClipboardCheck, Copy06, Edit05, LinkBroken01, PackageX, RefreshCw01, Repeat04, Scan, Truck01 } from "@untitledui/icons";
 import { daysOfCover } from "@/lib/selectors";
 import type { ApprovalType, Variant } from "@/lib/types";
 
@@ -12,13 +12,15 @@ export const approvalTypeMeta: Record<ApprovalType, { label: string; icon: FC<{ 
     mismatch: { label: "Mismatch", icon: RefreshCw01, tone: "bg-red-50 text-red-600" },
     import_duplicate: { label: "Import duplicate", icon: Copy06, tone: "bg-gray-100 text-gray-700" },
     sync_failure: { label: "Blocked push / sync", icon: LinkBroken01, tone: "bg-red-50 text-red-600" },
+    transfer_request: { label: "Store transfer", icon: Truck01, tone: "bg-indigo-50 text-indigo-600" },
 };
 
-export type ApprovalGroup = "all" | "reorder" | "counts" | "receiving" | "mismatch" | "import" | "sync";
+export type ApprovalGroup = "all" | "reorder" | "transfers" | "counts" | "receiving" | "mismatch" | "import" | "sync";
 
 export const approvalGroups: { id: ApprovalGroup; label: string; types: ApprovalType[] }[] = [
     { id: "all", label: "All", types: [] },
     { id: "reorder", label: "Reorder suggestions", types: ["reorder"] },
+    { id: "transfers", label: "Store transfers", types: ["transfer_request"] },
     { id: "counts", label: "Counts & adjustments", types: ["count_variance", "adjustment"] },
     { id: "receiving", label: "Receiving exceptions", types: ["unexpected_item", "partial_po"] },
     { id: "mismatch", label: "Reconciliation mismatches", types: ["mismatch"] },

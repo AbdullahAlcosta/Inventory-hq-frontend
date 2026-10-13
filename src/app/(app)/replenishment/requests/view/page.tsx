@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { use, useState, Suspense } from "react";
@@ -10,7 +11,7 @@ import { EmployeeName, LocationName, VariantCell } from "@/components/app/item-c
 import { ConfirmDialog } from "@/components/app/modal-dialog";
 import { PageHeader } from "@/components/app/page-header";
 import { HistoryTimeline, LineTable, Stepper, Td } from "@/components/app/purchasing/flow-ui";
-import { canConfirmReceipt, canFulfil, isStoreToStore, requestStatusLabel, requestSteps } from "@/components/app/replenishment/request-utils";
+import { canConfirmReceipt, canFulfil, isStoreToStore, requestStatusLabel, requestSteps, transferSteps } from "@/components/app/replenishment/request-utils";
 import { ScanQtyEditor } from "@/components/app/replenishment/scan-qty-editor";
 import { StatusBadge } from "@/components/app/status-badge";
 import { toast } from "@/components/app/toast";
@@ -18,7 +19,7 @@ import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { useRequiredScope } from "@/hooks/use-session";
 import { formatDateTime, formatNumber } from "@/lib/format";
-import { variantLabel } from "@/lib/selectors";
+import { canDecideApproval, variantLabel } from "@/lib/selectors";
 import { useAppStore } from "@/store/app-store";
 import { cx } from "@/utils/cx";
 
@@ -31,6 +32,7 @@ function StoreRequestDetailPage() {
     const products = useAppStore((s) => s.products);
     const variants = useAppStore((s) => s.variants);
     const locations = useAppStore((s) => s.locations);
+    const approvals = useAppStore((s) => s.approvals);
     const pickRequest = useAppStore((s) => s.pickRequest);
     const packRequest = useAppStore((s) => s.packRequest);
     const shipRequest = useAppStore((s) => s.shipRequest);
@@ -56,10 +58,12 @@ function StoreRequestDetailPage() {
     const sourceName = locations.find((l) => l.id === r.sourceId)?.name ?? "the sending location";
     const storeName = locations.find((l) => l.id === r.storeId)?.name ?? "the store";
     const storeToStore = isStoreToStore(r, locations);
+    const transferApproval = approvals.find((ap) => ap.payload.type === "transfer_request" && ap.payload.requestId === r.id);
+    const rejectNote = r.status === "rejected" ? [...r.history].reverse().find((h) => h.status === "rejected")?.note : undefined;
     const requestedUnits = r.lines.reduce((a, l) => a + l.requestedQty, 0);
     const shippedUnits = r.lines.reduce((a, l) => a + l.shippedQty, 0);
     const receivedUnits = r.lines.reduce((a, l) => a + l.receivedQty, 0);
-    const showShipped = r.status !== "requested";
+    const showShipped = ["picked", "packed", "shipped", "confirmed"].includes(r.status);
     const showReceived = r.status === "confirmed";
 
     const startMode = (m: Exclude<Mode, null>) => {
@@ -131,9 +135,28 @@ function StoreRequestDetailPage() {
                 }
             />
 
-            <Card>
-                <Stepper steps={requestSteps} current={r.status} history={r.history} />
-            </Card>
+            {r.status === "rejected" ? (
+                <p className="rounded-xl bg-error-primary px-4 py-3 text-sm text-error-primary ring-1 ring-error_subtle">
+                    The warehouse manager rejected this store transfer{rejectNote ? `: ${rejectNote}` : "."} Request the items from the warehouse instead.
+                </p>
+            ) : (
+                <Card>
+                    <Stepper steps={isStoreToStore(r, locations) ? transferSteps : requestSteps} current={r.status} history={r.history} />
+                </Card>
+            )}
+
+            {r.status === "pending_approval" && (
+                <p className="rounded-xl bg-primary px-4 py-3 text-sm text-secondary ring-1 ring-secondary">
+                    Store transfers need the warehouse manager’s approval before {sourceName} can pick and ship.{" "}
+                    {transferApproval && scope.canManage && canDecideApproval(scope.user, transferApproval, scope) ? (
+                        <Link href={`/approvals?id=${transferApproval.id}`} className="font-semibold text-primary underline">
+                            Review it in Approvals
+                        </Link>
+                    ) : (
+                        "Waiting on the warehouse."
+                    )}
+                </p>
+            )}
 
             {(r.status === "requested" || r.status === "picked" || r.status === "packed") && !sendingSide && (
                 <p className="rounded-xl bg-primary px-4 py-3 text-sm text-secondary ring-1 ring-secondary">

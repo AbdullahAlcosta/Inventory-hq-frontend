@@ -57,12 +57,14 @@ a whole **business unit**, or **one store or warehouse**. People assigned to a s
 | Create/edit products, bulk import | ✓ | ✓ | – | – | – |
 | Vendors, create POs, reorder | ✓ | ✓ | – | – | – |
 | Purchase orders (view) & receiving | ✓ | ✓ | – | ✓ | – |
-| Fulfil store requests (pick/pack/ship) | ✓ | ✓ | from their stores | ✓ | from their store |
+| Fulfil store requests (pick/pack/ship) | ✓ | ✓ | approved transfers from their stores | – | – |
+| Approve store-to-store transfers | ✓ | ✓ | – | – | – |
 | Sales channels, allocation, reconciliation | ✓ | – | – | – | – |
 | Executive report, locations, employees, companies | ✓ | – | – | – | – |
 
-Stores get stock from the warehouse **or from another store** in the same business unit; the sending location
-picks, packs and ships.
+Stores get stock from the warehouse **or from another store** in the same business unit. Warehouse requests are
+picked, packed and shipped by the warehouse manager. Store-to-store transfers first go to the warehouse manager in
+Approvals; once approved, the sending store's manager picks, packs and ships.
 
 Use **Switch demo user** and **Reset demo data** in the account menu at the bottom of the sidebar.
 Data changes are kept in `localStorage` until reset.

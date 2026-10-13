@@ -515,9 +515,9 @@ export const storeRequests: StoreRequest[] = [
     },
     {
         // Store-to-store transfer: San Ramon borrows from Dublin instead of waiting on the warehouse.
-        id: "sr_6", number: "SR-2209", storeId: "st_sanramon", sourceId: "st_dublin", status: "requested", note: "Customer waiting — Dublin has extra.",
+        id: "sr_6", number: "SR-2209", storeId: "st_sanramon", sourceId: "st_dublin", status: "pending_approval", note: "Customer waiting — Dublin has extra.",
         lines: [{ variantId: "p_backwoods_v2", requestedQty: 4, shippedQty: 0, receivedQty: 0 }],
-        createdBy: "e_mgr_store", createdAt: daysAgo(0, 9), history: [{ status: "requested", by: "e_mgr_store", at: daysAgo(0, 9) }],
+        createdBy: "e_mgr_store", createdAt: daysAgo(0, 9), history: [{ status: "pending_approval", by: "e_mgr_store", at: daysAgo(0, 9) }],
     },
 ];
 
@@ -655,6 +655,11 @@ approvals.push(
         businessUnitId: "bu_skate", locationId: "st_skate", status: "pending",
         payload: { type: "sync_failure", connectionId: "cn_woo_skate", variantIds: [], reason: "Authentication expired (401). Re-connect the store or refresh the API key.", kind: "failed" },
         createdAt: daysAgo(1, 14),
+    },
+    {
+        id: "ap_transfer_1", type: "transfer_request", title: "Store transfer SR-2209: Dublin Smoke Shop → San Ramon Smoke Shop",
+        summary: "1 item, 4 units. Needs warehouse approval before Dublin Smoke Shop ships.",
+        businessUnitId: "bu_smoke", locationId: "wh_smoke", status: "pending", payload: { type: "transfer_request", requestId: "sr_6" }, createdAt: daysAgo(0, 9),
     },
     {
         id: "ap_hist_1", type: "adjustment", title: "Adjustment ADJ-0090 · Expired", summary: `${productName("p_gummies_v1")}: remove 4 units at Smoke Shops Warehouse.`,

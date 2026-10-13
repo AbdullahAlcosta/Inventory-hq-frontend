@@ -854,6 +854,7 @@ export const useAppStore = create<AppState>()(
                     const source =
                         s.locations.find((l) => l.id === sourceId && l.businessUnitId === store.businessUnitId && l.id !== storeId) ??
                         s.locations.find((l) => l.businessUnitId === store.businessUnitId && l.type === "warehouse");
+                    const transfer = source?.type === "store";
                     const number = nextNumber("SR", s.storeRequests.map((r) => r.number));
                     const by = s.session.userId ?? "system";
                     s.storeRequests.unshift({
@@ -861,13 +862,27 @@ export const useAppStore = create<AppState>()(
                         number,
                         storeId,
                         sourceId: source?.id ?? "",
-                        status: "requested",
+                        // Store-to-store transfers need the warehouse manager's approval first.
+                        status: transfer ? "pending_approval" : "requested",
                         lines: lines.map((l) => ({ ...l, shippedQty: 0, receivedQty: 0 })),
                         note,
                         createdBy: by,
                         createdAt: now(),
-                        history: [{ status: "requested", by, at: now() }],
+                        history: [{ status: transfer ? "pending_approval" : "requested", by, at: now() }],
                     });
+                    if (transfer && source) {
+                        const warehouse = s.locations.find((l) => l.businessUnitId === store.businessUnitId && l.type === "warehouse");
+                        const units = lines.reduce((n, l) => n + l.requestedQty, 0);
+                        addApproval(s, {
+                            type: "transfer_request",
+                            title: `Store transfer ${number}: ${source.name} → ${store.name}`,
+                            summary: `${lines.length} item${lines.length === 1 ? "" : "s"}, ${units} unit${units === 1 ? "" : "s"}. Needs warehouse approval before ${source.name} ships.`,
+                            businessUnitId: store.businessUnitId,
+                            // Routed to the business unit's warehouse so its manager decides.
+                            locationId: warehouse?.id ?? null,
+                            payload: { type: "transfer_request", requestId: id },
+                        });
+                    }
                     log(s, "store_request", `${number} requested by ${store.name} from ${source?.name ?? "—"} (${lines.length} line${lines.length === 1 ? "" : "s"})`, { locationId: storeId });
                 });
                 return id;
@@ -1187,6 +1202,22 @@ export const useAppStore = create<AppState>()(
                             closeApproval(s, a, "resolved", "Items will not be sold on this channel", note);
                         }
                         log(s, "channel", `${a.title}: ${a.decision ?? "retry attempted"}`, { locationId: a.locationId });
+                    }
+
+                    if (p.type === "transfer_request") {
+                        const r = s.storeRequests.find((x) => x.id === p.requestId);
+                        const by = s.session.userId ?? "system";
+                        if (r && r.status === "pending_approval") {
+                            if (decision.action === "approve") {
+                                r.status = "requested";
+                                r.history.push({ status: "requested", by, at: now(), note: note || "Transfer approved by the warehouse." });
+                                closeApproval(s, a, "approved", "Transfer approved", note);
+                            } else if (decision.action === "reject" || decision.action === "dismiss") {
+                                r.status = "rejected";
+                                r.history.push({ status: "rejected", by, at: now(), note: note || "Transfer rejected by the warehouse." });
+                            }
+                            log(s, "store_request", `${r.number} transfer ${r.status === "rejected" ? "rejected" : "approved"}`, { locationId: r.storeId });
+                        }
                     }
 
                     if (a.status !== "pending") log(s, "approval", `${a.title} — ${a.decision}`, { locationId: a.locationId });

@@ -12,7 +12,7 @@ import { formatDateTime, timeAgo } from "@/lib/format";
 import type { Approval } from "@/lib/types";
 import { type ApprovalDecision, useAppStore } from "@/store/app-store";
 import { approvalTypeMeta } from "./approval-meta";
-import { AdjustmentDetail, CountDetail, DuplicateDetail, FieldGrid, MismatchDetail, PartialPoDetail, ReorderDetail, ScopedLink, Section, SyncDetail, UnexpectedDetail } from "./approval-details";
+import { AdjustmentDetail, CountDetail, DuplicateDetail, FieldGrid, MismatchDetail, PartialPoDetail, ReorderDetail, ScopedLink, Section, SyncDetail, UnexpectedDetail, TransferDetail } from "./approval-details";
 
 interface ApprovalReviewProps {
     approvalId: string | null;
@@ -167,6 +167,19 @@ const ReviewBody = ({ approval, onClose, onPosCreated }: { approval: Approval; o
                             Same item
                         </Button>
                     )}
+                </>
+            );
+            break;
+        case "transfer_request":
+            detail = <TransferDetail payload={p} />;
+            actions = (
+                <>
+                    <Button color="secondary-destructive" size="lg" onPress={() => decide({ action: "reject" }, "Transfer rejected")}>
+                        Reject
+                    </Button>
+                    <Button size="lg" onPress={() => decide({ action: "approve" }, "Transfer approved — the sending store can ship it")}>
+                        Approve transfer
+                    </Button>
                 </>
             );
             break;

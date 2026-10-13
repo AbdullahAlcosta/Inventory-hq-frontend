@@ -286,7 +286,11 @@ export interface PurchaseOrder {
 /* Store replenishment (PRD §5.7, §9.2)                                */
 /* ------------------------------------------------------------------ */
 
-export type StoreRequestStatus = "requested" | "picked" | "packed" | "shipped" | "confirmed";
+/**
+ * Store-to-store transfers start as "pending_approval" until the warehouse manager approves them
+ * ("rejected" if they don't). Warehouse requests start at "requested".
+ */
+export type StoreRequestStatus = "pending_approval" | "rejected" | "requested" | "picked" | "packed" | "shipped" | "confirmed";
 
 export interface StoreRequestLine {
     variantId: ID;
@@ -329,7 +333,8 @@ export type ApprovalType =
     | "partial_po"
     | "mismatch"
     | "import_duplicate"
-    | "sync_failure";
+    | "sync_failure"
+    | "transfer_request";
 
 export type ApprovalStatus = "pending" | "approved" | "rejected" | "dismissed" | "resolved";
 
@@ -341,7 +346,8 @@ export type ApprovalPayload =
     | { type: "partial_po"; poId: ID }
     | { type: "mismatch"; mismatchId: ID }
     | { type: "import_duplicate"; importRow: ImportRow; matchProductId: ID; matchVariantId: ID | null; reason: string }
-    | { type: "sync_failure"; connectionId: ID; variantIds: ID[]; reason: string; kind: "blocked" | "failed" };
+    | { type: "sync_failure"; connectionId: ID; variantIds: ID[]; reason: string; kind: "blocked" | "failed" }
+    | { type: "transfer_request"; requestId: ID };
 
 export interface Approval {
     id: ID;

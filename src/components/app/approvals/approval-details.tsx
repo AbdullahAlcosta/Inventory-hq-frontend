@@ -481,3 +481,65 @@ export const SyncDetail = ({ approval, payload }: { approval: Approval; payload:
         </>
     );
 };
+
+/* ------------------------------------------------------------------ */
+/* Store transfer (store → store request)                              */
+/* ------------------------------------------------------------------ */
+
+export const TransferDetail = ({ payload }: { payload: P<"transfer_request"> }) => {
+    const request = useAppStore((s) => s.storeRequests.find((r) => r.id === payload.requestId));
+    const locations = useAppStore((s) => s.locations);
+    const stockLevels = useAppStore((s) => s.stockLevels);
+    if (!request) return <Callout tone="warning">This request no longer exists.</Callout>;
+    const store = locations.find((l) => l.id === request.storeId);
+    const warehouse = locations.find((l) => l.businessUnitId === store?.businessUnitId && l.type === "warehouse");
+    return (
+        <>
+            <FieldGrid>
+                <Field label="Request">
+                    <Link href={`/replenishment/requests/view?id=${request.id}`} className="hover:underline">
+                        {request.number}
+                    </Link>
+                </Field>
+                <Field label="Status">
+                    <StatusBadge status={request.status} size="sm" />
+                </Field>
+                <Field label="From (sending store)">
+                    <LocationName id={request.sourceId} />
+                </Field>
+                <Field label="To (requesting store)">
+                    <LocationName id={request.storeId} />
+                </Field>
+                <Field label="Requested by">
+                    <EmployeeName id={request.createdBy} />
+                </Field>
+                <Field label="Requested">{formatDateTime(request.createdAt)}</Field>
+            </FieldGrid>
+            {request.note && <Callout tone="info">{request.note}</Callout>}
+            <Section title="Items">
+                <MiniTable head={["Item", "Qty", "At sender", warehouse ? "At warehouse" : ""]}>
+                    {request.lines.map((l) => {
+                        const atSource = stockAt({ stockLevels }, l.variantId, request.sourceId).available;
+                        const atWarehouse = warehouse ? stockAt({ stockLevels }, l.variantId, warehouse.id).available : null;
+                        return (
+                            <tr key={l.variantId}>
+                                <td className="max-w-60 px-3 py-2.5">
+                                    <VariantCell variantId={l.variantId} link={false} />
+                                </td>
+                                <td className="px-3 py-2.5 text-right font-medium text-primary">{formatNumber(l.requestedQty)}</td>
+                                <td className={cx("px-3 py-2.5 text-right", atSource < l.requestedQty ? "font-semibold text-error-primary" : "text-secondary")}>
+                                    {formatNumber(atSource)}
+                                </td>
+                                <td className="px-3 py-2.5 text-right text-secondary">{atWarehouse === null ? "" : formatNumber(atWarehouse)}</td>
+                            </tr>
+                        );
+                    })}
+                </MiniTable>
+            </Section>
+            <p className="text-sm text-tertiary">
+                Approving lets <LocationName id={request.sourceId} /> pick, pack and ship. If the warehouse can cover it instead, reject and ask the store to request from the
+                warehouse.
+            </p>
+        </>
+    );
+};

@@ -102,7 +102,8 @@ function NewStoreRequest() {
         setTouched(true);
         if (errors.length || !source) return;
         const id = createStoreRequest({ storeId: store.id, sourceId: source.id, lines, note: note.trim() });
-        toast.success(`Request sent to ${source.name}`, `${lines.length} item${lines.length === 1 ? "" : "s"} · ${totalUnits} units`);
+        if (source.type === "store") toast.success("Transfer sent for warehouse approval", `${source.name} can ship once the warehouse manager approves.`);
+        else toast.success(`Request sent to ${source.name}`, `${lines.length} item${lines.length === 1 ? "" : "s"} · ${totalUnits} units`);
         router.push(`/replenishment/requests/view?id=${id}`);
     };
 
@@ -117,7 +118,10 @@ function NewStoreRequest() {
                 description={`Ask the warehouse or another store for stock. They pick, pack and ship it to ${store.name}.`}
             />
 
-            <Card title="Get stock from" description={lines.length ? "Available units of the items below at each location." : "Add items below to see what each location has."}>
+            <Card
+                title="Get stock from"
+                description={`${lines.length ? "Available units of the items below at each location." : "Add items below to see what each location has."} Requests to another store need the warehouse manager’s approval first.`}
+            >
                 {sources.length === 0 ? (
                     <p className="text-sm text-tertiary">There is no warehouse or other store in this business unit to request from.</p>
                 ) : (
