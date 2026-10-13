@@ -1,56 +1,87 @@
-# Untitled UI starter kit for Next.js
+# Inventory HQ — Frontend (static MVP)
 
-This is an official Untitled UI starter kit for Next.js. Kickstart your Untitled UI project with Next.js in seconds.
+Back-office system for products, stock, prices, purchasing, store replenishment and sales-channel sync
+across Alcosta's businesses (Smoke Shops, Apparel, Skates, Pokémon). Built with **Next.js (App Router)**,
+**React 19**, **TypeScript**, **Tailwind CSS v4** and **Untitled UI React**.
 
-## Untitled UI React
+> **No backend yet.** Every screen runs on demo data in the browser. Business rules from the PRD
+> (approvals, stock states, receiving, allocation, compliance checks…) are implemented in a client-side
+> store so the flows can be clicked through end to end. When the API is ready, the store actions are
+> swapped for API calls — see [Connecting the backend](#connecting-the-backend).
 
-[Untitled UI React](https://www.untitledui.com/react) is the world’s largest collection of open-source React UI components. Everything you need to design and develop modern, beautiful interfaces—fast.
-
-Built with React 19.3, Tailwind CSS v4.3, TypeScript 6.0, and React Aria, Untitled UI React components deliver modern performance, type safety, and maintainability.
-
-[Learn more](https://www.untitledui.com/react) • [Documentation](https://www.untitledui.com/react/docs/introduction) • [Figma](https://www.untitledui.com/figma) • [FAQs](https://www.untitledui.com/faqs)
-
-## Getting started
-
-First, run the development server:
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3000
+npm run build      # production build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Sign in by picking a demo account. Each one shows the app through a different role and assignment:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Account | Role | Sees |
+| --- | --- | --- |
+| Bilal Ahmed | Executive | Whole company, all Approvals, Setup, Executive report |
+| Sara Khan | Store Manager | The three smoke shop stores |
+| Daniel Ortiz | Warehouse Manager | Smoke Shops Warehouse (receiving, purchasing) |
+| Priya Patel | Store Associate | Alcosta Shop (request stock, confirm deliveries, counts) |
+| Marcus Lee | Warehouse Associate | Warehouse floor (receive, pick, pack, ship) |
+| Lena Park | Executive, second company | Only Bayline data — shows company separation |
 
-## Resources
+Use **Switch demo user** and **Reset demo data** in the account menu at the bottom of the sidebar.
+Data changes are kept in `localStorage` until reset.
 
-Untitled UI React is built on top of [Untitled UI Figma](https://www.untitledui.com/figma), the world's largest and most popular Figma UI kit and design system. Explore more:
+Barcode scanning: every scan field works with a USB/Bluetooth scanner (they type the code and press Enter).
+Typing a code by hand is the fallback, and **Simulate scan** lists demo barcodes so flows can be shown without hardware.
 
-**[Untitled UI Figma:](https://www.untitledui.com/react/resources/figma-files)** The world's largest Figma UI kit and design system.
-<br/>
-**[Untitled UI Icons:](https://www.untitledui.com/react/resources/icons)** A clean, consistent, and neutral icon library crafted specifically for modern UI design.
-<br/>
-**[Untitled UI file icons:](https://www.untitledui.com/react/resources/file-icons)** Free file format icons, designed specifically for modern web and UI design.
-<br/>
-**[Untitled UI flag icons:](https://www.untitledui.com/react/resources/flag-icons)** Free country flag icons, designed specifically for modern web and UI design.
-<br/>
-**[Untitled UI avatars:](https://www.untitledui.com/react/resources/avatars)** Free placeholder user avatars and profile pictures to use in your projects.
-<br/>
-**[Untitled UI logos:](https://www.untitledui.com/react/resources/logos)** Free fictional company logos to use in your projects.
+## What's in the MVP
 
-## License
+| Area (PRD) | Screens |
+| --- | --- |
+| Setup §5.1 | Locations (Company → Business Units → Stores/Warehouses), Employees (role + assignment), Companies |
+| Catalog §5.2 | Products & variants, naming guidance (Appendix A), live duplicate check, units of measure, barcodes, compliance flags, bulk import with duplicate review |
+| Sales channels §5.3 | Connections (Quickvee per store, Shopify/WooCommerce per BU), sync speed, safety buffer, blocked flags, push with compliance check, stock allocation (Shared / Dedicated / Hybrid) |
+| Reconciliation §5.4 | Expected vs reported dashboard, pull now, upload export → mismatch report |
+| Stock §5.5 | Inventory by state, product lookup across locations, opening & cycle counts (scan), adjustments with reasons, activity log |
+| Purchasing §5.6 | Vendors, purchase orders and lifecycle, scan-based receiving (case → units, unexpected items, partial POs) |
+| Replenishment §5.7 | Store requests: Requested → Picked → Packed → Shipped (In Transit) → Confirmed |
+| Reordering §5.8 | Reorder points, sales speed, run-out projection, suggestions → Approvals → POs (one per vendor) |
+| Approvals §5.9 | One list for every decision, with a review panel per type and bulk approve for reorders |
+| Executive report §5.10 | Monthly sales, margins, inventory value by BU and location; CSV and print/PDF download |
 
-Untitled UI React open-source components are licensed under the MIT license, which means you can use them for free in unlimited commercial projects.
+## Project structure
 
-> [!NOTE]
-> This license applies only to the starter kit and to the components included in this open-source repository. [Untitled UI React PRO](https://www.untitledui.com/react) includes hundreds more advanced UI components and page examples and is subject to a separate [license agreement](https://www.untitledui.com/license).
+```
+src/
+├── app/
+│   ├── login/                 Mock sign-in (demo accounts)
+│   └── (app)/                 Signed-in area; layout = AppShell (sidebar, header, access guard)
+│       ├── dashboard/  approvals/  catalog/  stock/  purchasing/
+│       ├── replenishment/  channels/  reports/  setup/
+├── components/
+│   ├── app/                   Inventory HQ components (shell, page header, scan input, status badge…)
+│   ├── base/ application/     Untitled UI components
+├── hooks/use-session.ts       Current user + scope (what they can see, from role + assignment)
+├── lib/
+│   ├── types.ts               Domain model (mirrors the PRD entities)
+│   ├── selectors.ts           Pure business logic: stock, channel allocation, duplicates, barcode lookup, access
+│   └── format.ts
+├── mock/seed.ts               Deterministic demo data
+└── store/app-store.ts         Zustand store; every action = a future API endpoint
+```
 
-[Untitled UI license agreement →](https://www.untitledui.com/license)
+## Connecting the backend
 
-[Frequently asked questions →](https://www.untitledui.com/faqs)
+1. Keep `src/lib/types.ts` as the API contract (or generate it from the API schema).
+2. Replace the seed with fetches (e.g. TanStack Query) per area; keep `selectors.ts` for client-side derivations
+   that don't need the server.
+3. Each action in `src/store/app-store.ts` maps to one endpoint (e.g. `receiveScan` → `POST /purchase-orders/:id/scans`,
+   `decideApproval` → `POST /approvals/:id/decision`). The UI only calls these actions, so screens don't change.
+4. Replace the mock login with real auth; `useScope()` should then read role and assignment from the session.
+
+## Open items from the PRD (reflected as assumptions)
+
+- Quickvee API access, channel retry behavior and SLAs are not defined — the UI shows failures in Approvals with Retry.
+- Every count variance goes to Approvals (no threshold yet).
+- Executive report contents/format are provisional (CSV + printable page).
+- Three smoke shop locations are assumed; Pokémon singles are not modelled separately.

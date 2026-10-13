@@ -1,11 +1,12 @@
 {
-    "name": "untitledui-nextjs-starter-kit",
+    "name": "inventory-hq-frontend",
     "version": "0.0.0",
     "private": true,
     "scripts": {
         "dev": "next dev --turbopack",
         "build": "next build",
-        "start": "next start"
+        "start": "next start",
+        "typecheck": "tsc --noEmit"
     },
     "dependencies": {
         "@internationalized/date": "^3.12.4",
