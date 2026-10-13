@@ -17,6 +17,7 @@ import { stockAt } from "@/lib/selectors";
 import type { AdjustmentReason, StockState } from "@/lib/types";
 import { useAppStore } from "@/store/app-store";
 import { cx } from "@/utils/cx";
+import { LockedLocation } from "./locked-location";
 import { locationItems, stateLabels } from "./stock-utils";
 
 interface AdjustmentModalProps {
@@ -145,19 +146,23 @@ const AdjustmentForm = ({ isOpen, onOpenChange, locationId: initialLocation, var
         >
             <div className="flex flex-col gap-5">
                 <div>
-                    <Select
-                        label="Location"
-                        placeholder="Select a location"
-                        items={locationItems(scope.locations)}
-                        selectedKey={locationId}
-                        onSelectionChange={(k: Key | null) => setLocationId(k ? String(k) : null)}
-                    >
-                        {(item) => (
-                            <Select.Item id={item.id} supportingText={item.supportingText}>
-                                {item.label}
-                            </Select.Item>
-                        )}
-                    </Select>
+                    {initialLocation && location ? (
+                        <LockedLocation name={location.name} type={location.type} />
+                    ) : (
+                        <Select
+                            label="Location"
+                            placeholder="Select a location"
+                            items={locationItems(scope.locations)}
+                            selectedKey={locationId}
+                            onSelectionChange={(k: Key | null) => setLocationId(k ? String(k) : null)}
+                        >
+                            {(item) => (
+                                <Select.Item id={item.id} supportingText={item.supportingText}>
+                                    {item.label}
+                                </Select.Item>
+                            )}
+                        </Select>
+                    )}
                     {err(errors.location)}
                 </div>
 

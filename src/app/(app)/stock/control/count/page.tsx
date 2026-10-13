@@ -66,7 +66,7 @@ function CountSheetPage() {
     if (!count || !location || !scope.locationIds.includes(count.locationId)) {
         return (
             <>
-                <PageHeader title="Count" backHref="/stock/counts" backLabel="Counts" />
+                <PageHeader title="Count" backHref="/stock/control" backLabel="Stock Control" />
                 <Card>
                     <Empty icon={ClipboardCheck} title="Count not found" description="It may belong to a location you don’t have access to." />
                 </Card>
@@ -117,8 +117,8 @@ function CountSheetPage() {
     return (
         <div className="flex flex-col gap-6">
             <PageHeader
-                backHref="/stock/counts"
-                backLabel="Counts"
+                backHref="/stock/control"
+                backLabel="Stock Control"
                 eyebrow={location.name}
                 title={
                     <span className="flex flex-wrap items-center gap-3">

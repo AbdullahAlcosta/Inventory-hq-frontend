@@ -14,6 +14,7 @@ import { useRequiredScope } from "@/hooks/use-session";
 import { pluralize } from "@/lib/format";
 import { stockAt } from "@/lib/selectors";
 import { useAppStore } from "@/store/app-store";
+import { LockedLocation } from "./locked-location";
 import { isLowStock, locationItems } from "./stock-utils";
 
 interface StartCountModalProps {
@@ -68,14 +69,14 @@ const StartCountForm = ({ isOpen, onOpenChange, locationId: initialLocation }: S
         const id = startCount(locationId, selected, kind);
         toast.success(`${kind === "opening" ? "Opening" : "Cycle"} count started`, `${pluralize(selected.length, "item")} at ${location?.name}.`);
         onOpenChange(false);
-        router.push(`/stock/counts/view?id=${id}`);
+        router.push(`/stock/control/count?id=${id}`);
     };
 
     return (
         <ModalDialog
             isOpen={isOpen}
             onOpenChange={onOpenChange}
-            title="Start count"
+            title={location ? (kind === "opening" ? "Start opening count" : "Start cycle count") : "Start count"}
             description="Count what’s on the shelf. Differences go to Approvals before stock changes."
             size="md"
             footer={
@@ -90,22 +91,26 @@ const StartCountForm = ({ isOpen, onOpenChange, locationId: initialLocation }: S
             }
         >
             <div className="flex flex-col gap-5">
-                <Select
-                    label="Location"
-                    placeholder="Select a location"
-                    items={locationItems(scope.locations)}
-                    selectedKey={locationId}
-                    onSelectionChange={(k: Key | null) => {
-                        setLocationId(k ? String(k) : null);
-                        setSelected([]);
-                    }}
-                >
-                    {(item) => (
-                        <Select.Item id={item.id} supportingText={item.supportingText}>
-                            {item.label}
-                        </Select.Item>
-                    )}
-                </Select>
+                {initialLocation && location ? (
+                    <LockedLocation name={location.name} type={location.type} />
+                ) : (
+                    <Select
+                        label="Location"
+                        placeholder="Select a location"
+                        items={locationItems(scope.locations)}
+                        selectedKey={locationId}
+                        onSelectionChange={(k: Key | null) => {
+                            setLocationId(k ? String(k) : null);
+                            setSelected([]);
+                        }}
+                    >
+                        {(item) => (
+                            <Select.Item id={item.id} supportingText={item.supportingText}>
+                                {item.label}
+                            </Select.Item>
+                        )}
+                    </Select>
+                )}
 
                 {location && (
                     <div className="rounded-xl bg-secondary px-4 py-3">
