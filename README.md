@@ -28,14 +28,41 @@ GitHub only shows this README.) The site is served at `https://<owner>.github.io
 
 Sign in by picking a demo account. Each one shows the app through a different role and assignment:
 
-| Account | Role | Sees |
+| Account | Role | Works on |
 | --- | --- | --- |
-| Bilal Ahmed | Executive | Whole company, all Approvals, Setup, Executive report |
-| Sara Khan | Store Manager | The three smoke shop stores |
-| Daniel Ortiz | Warehouse Manager | Smoke Shops Warehouse (receiving, purchasing) |
-| Priya Patel | Store Associate | Alcosta Shop (request stock, confirm deliveries, counts) |
-| Marcus Lee | Warehouse Associate | Warehouse floor (receive, pick, pack, ship) |
+| Bilal Ahmed | Executive | Company overview or any single store/warehouse; catalog, channels, setup, reports |
+| Sara Khan | Store Manager | Three smoke shops: stock control, requests (warehouse or other stores), approvals for those stores |
+| Daniel Ortiz | Warehouse Manager | Smoke Shops Warehouse: vendors, POs, receiving, reorder, catalog |
+| Priya Patel | Store Associate | Alcosta Shop (locked): request stock, confirm deliveries, counts & adjustments |
+| Marcus Lee | Warehouse Associate | Smoke Shops Warehouse (locked): receive, pick, pack, ship |
 | Lena Park | Executive, second company | Only Bayline data — shows company separation |
+
+### Location switcher
+
+The switcher at the top of the sidebar picks what you're looking at: **All locations** (company overview),
+a whole **business unit**, or **one store or warehouse**. People assigned to a single location are locked to it.
+
+- **Location pages** — Inventory, Stock Control, Store Requests, Receiving — always work on one location.
+  On an overview they ask you to pick one first.
+- **Dashboard** shows a company/BU overview or that location's dashboard.
+- **Company-level pages** — Catalog, Product Lookup, Approvals, Purchasing, Channels, Reports, Setup — show the whole
+  company, or the business unit of the picked location.
+
+### Who can do what
+
+| | Executive | Warehouse manager | Store manager | Warehouse associate | Store associate |
+| --- | :-: | :-: | :-: | :-: | :-: |
+| Dashboard, Inventory, Stock Control, Store Requests, Product Lookup, Products (view) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Approvals (own locations) | all | warehouse items + import duplicates | store items | – | – |
+| Create/edit products, bulk import | ✓ | ✓ | – | – | – |
+| Vendors, create POs, reorder | ✓ | ✓ | – | – | – |
+| Purchase orders (view) & receiving | ✓ | ✓ | – | ✓ | – |
+| Fulfil store requests (pick/pack/ship) | ✓ | ✓ | from their stores | ✓ | from their store |
+| Sales channels, allocation, reconciliation | ✓ | – | – | – | – |
+| Executive report, locations, employees, companies | ✓ | – | – | – | – |
+
+Stores get stock from the warehouse **or from another store** in the same business unit; the sending location
+picks, packs and ships.
 
 Use **Switch demo user** and **Reset demo data** in the account menu at the bottom of the sidebar.
 Data changes are kept in `localStorage` until reset.
@@ -51,9 +78,9 @@ Typing a code by hand is the fallback, and **Simulate scan** lists demo barcodes
 | Catalog §5.2 | Products & variants, naming guidance (Appendix A), live duplicate check, units of measure, barcodes, compliance flags, bulk import with duplicate review |
 | Sales channels §5.3 | Connections (Quickvee per store, Shopify/WooCommerce per BU), sync speed, safety buffer, blocked flags, push with compliance check, stock allocation (Shared / Dedicated / Hybrid) |
 | Reconciliation §5.4 | Expected vs reported dashboard, pull now, upload export → mismatch report |
-| Stock §5.5 | Inventory by state, product lookup across locations, opening & cycle counts (scan), adjustments with reasons, activity log |
+| Stock §5.5 | Inventory by state (per location), product lookup across locations, Stock Control (opening & cycle counts by scanning + adjustments with reasons, one history), activity log |
 | Purchasing §5.6 | Vendors, purchase orders and lifecycle, scan-based receiving (case → units, unexpected items, partial POs) |
-| Replenishment §5.7 | Store requests: Requested → Picked → Packed → Shipped (In Transit) → Confirmed |
+| Replenishment §5.7 | Store requests from the warehouse or another store: Requested → Picked → Packed → Shipped (In Transit) → Confirmed |
 | Reordering §5.8 | Reorder points, sales speed, run-out projection, suggestions → Approvals → POs (one per vendor) |
 | Approvals §5.9 | One list for every decision, with a review panel per type and bulk approve for reorders |
 | Executive report §5.10 | Monthly sales, margins, inventory value by BU and location; CSV and print/PDF download |

@@ -117,7 +117,7 @@ export const StoreAssociateHome = ({ scope }: { scope: Scope }) => {
                 actions={[
                     { label: "Request stock", description: "Ask the warehouse to send items", href: "/replenishment/requests/new", icon: Truck01 },
                     { label: "Product lookup", description: "Find stock at every location", href: "/stock/lookup", icon: PackageSearch },
-                    { label: "Start a count", description: "Scan and count your shelves", href: storeIds[0] ? `/stock/counts?start=${storeIds[0]}` : "/stock/counts", icon: ClipboardCheck },
+                    { label: "Start a count", description: "Scan and count your shelves", href: "/stock/control?start=1", icon: ClipboardCheck },
                     {
                         label: "Confirm delivery",
                         description: incoming.length ? `${pluralize(incoming.length, "shipment")} arrived?` : "Nothing in transit",
@@ -169,7 +169,7 @@ export const WarehouseAssociateHome = ({ scope }: { scope: Scope }) => {
                     { label: "Receive a delivery", description: "Scan a vendor shipment in", href: "/purchasing/receiving", icon: Scan },
                     { label: "Store requests", description: "Pick, pack and ship", href: "/replenishment/requests", icon: Truck01 },
                     { label: "Product lookup", description: "Find stock at every location", href: "/stock/lookup", icon: PackageSearch },
-                    { label: "Start a count", description: "Count a section of the warehouse", href: whIds[0] ? `/stock/counts?start=${whIds[0]}` : "/stock/counts", icon: ClipboardCheck },
+                    { label: "Start a count", description: "Count a section of the warehouse", href: "/stock/control?start=1", icon: ClipboardCheck },
                 ]}
             />
 

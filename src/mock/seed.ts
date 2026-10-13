@@ -94,9 +94,9 @@ export const employees: Employee[] = [
 
 /** Accounts offered on the mock login screen. */
 export const demoAccounts: { employeeId: string; headline: string }[] = [
-    { employeeId: "e_exec", headline: "Sees everything, decides Approvals, adds employees, gets the monthly report." },
-    { employeeId: "e_mgr_store", headline: "Manages the three smoke shop stores. Approvals, vendors and POs in scope." },
-    { employeeId: "e_mgr_wh", headline: "Manages the Smoke Shops Warehouse: receiving, picking, purchasing." },
+    { employeeId: "e_exec", headline: "Company overview or any single store/warehouse. Owns catalog, channels, setup and the monthly report." },
+    { employeeId: "e_mgr_store", headline: "Runs three smoke shops: stock control, requests from the warehouse or other stores, approvals for those stores." },
+    { employeeId: "e_mgr_wh", headline: "Runs the Smoke Shops Warehouse: vendors, purchase orders, receiving, reordering and the catalog." },
     { employeeId: "e_assoc_store", headline: "Works at Alcosta Shop. Requests stock and confirms deliveries." },
     { employeeId: "e_assoc_wh", headline: "Works the warehouse floor. Receives POs, picks, packs and ships." },
     { employeeId: "e_bay_exec", headline: "Executive of a second company — shows strict company separation." },

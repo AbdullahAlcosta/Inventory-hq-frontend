@@ -329,7 +329,7 @@ export default function ExecutiveReportPage() {
                                     label="Count variances"
                                     value={report.ops.countVariances}
                                     sub={report.ops.countsWithVariance ? `across ${report.ops.countsWithVariance} count${report.ops.countsWithVariance === 1 ? "" : "s"}` : undefined}
-                                    href="/stock/counts"
+                                    href="/stock/control"
                                 />
                             </dl>
                         </Card>

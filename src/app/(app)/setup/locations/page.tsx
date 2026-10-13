@@ -168,7 +168,7 @@ export default function LocationsSetupPage() {
                                                                 Opening count done
                                                             </BadgeWithDot>
                                                         ) : (
-                                                            <Link href="/stock/counts" className="rounded-full outline-hidden focus-visible:ring-2 focus-visible:ring-brand">
+                                                            <Link href="/stock/control" className="rounded-full outline-hidden focus-visible:ring-2 focus-visible:ring-brand">
                                                                 <BadgeWithDot size="sm" type="pill-color" color="warning">
                                                                     Opening count needed →
                                                                 </BadgeWithDot>
