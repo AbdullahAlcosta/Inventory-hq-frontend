@@ -124,6 +124,18 @@ function Lookup() {
 
     const shown = results.slice(0, MAX_PRODUCTS);
 
+    /**
+     * Store staff can ask for stock from the warehouse or from another store in the same business unit.
+     * Executives and warehouse staff don't raise store requests from here.
+     */
+    const requestFor = useMemo(() => {
+        if (scope.isExecutive || !scope.isStoreLevel) return null;
+        const store = scope.activeLocation?.type === "store" ? scope.activeLocation : null;
+        // Which stores count as "mine" (not a source): the picked store, or every store this person works at.
+        const own = store ? [store.id] : scope.user.locationIds;
+        return { own, businessUnitId: store?.businessUnitId ?? null };
+    }, [scope]);
+
     return (
         <div className="flex flex-col gap-6">
             <PageHeader
@@ -207,7 +219,7 @@ function Lookup() {
                             locations={locations.filter((l) => l.businessUnitId === r.product.businessUnitId)}
                             myLocationIds={scope.user.locationIds}
                             stockLevels={stockLevels}
-                            canRequest={scope.canManage || scope.isStoreLevel}
+                            requestFor={requestFor}
                         />
                     ))}
                 </>
@@ -223,7 +235,7 @@ function ProductStockCard({
     locations,
     myLocationIds,
     stockLevels,
-    canRequest,
+    requestFor,
 }: {
     product: Product;
     variants: Variant[];
@@ -231,10 +243,13 @@ function ProductStockCard({
     locations: Location[];
     myLocationIds: string[];
     stockLevels: ReturnType<typeof useAppStore.getState>["stockLevels"];
-    canRequest: boolean;
+    requestFor: { own: string[]; businessUnitId: string | null } | null;
 }) {
     const cols = [...locations].sort((a, b) => (a.type === b.type ? a.name.localeCompare(b.name) : a.type === "store" ? -1 : 1));
     const mine = (id: string) => myLocationIds.includes(id);
+    const canRequest = !!requestFor && (!requestFor.businessUnitId || requestFor.businessUnitId === product.businessUnitId);
+    const warehouse = cols.find((l) => l.type === "warehouse");
+    const requestHref = (variantId: string, sourceId: string) => `/replenishment/requests/new?variant=${variantId}&source=${sourceId}`;
 
     return (
         <Card
@@ -292,16 +307,23 @@ function ProductStockCard({
                                                 ) : (
                                                     <span className={cx("text-md", qty <= 3 ? "text-error-primary" : "text-primary")}>{formatNumber(qty)}</span>
                                                 )}
+                                                {canRequest && qty > 0 && l.type === "store" && !requestFor!.own.includes(l.id) && (
+                                                    <span className="mt-1 block">
+                                                        <Button size="sm" color="link-gray" href={requestHref(v.id, l.id)} className="text-xs whitespace-nowrap underline">
+                                                            Request
+                                                        </Button>
+                                                    </span>
+                                                )}
                                             </td>
                                         );
                                     })}
                                     <td className="px-5 py-3 text-right md:px-6">
-                                        {canRequest && (
+                                        {canRequest && warehouse && (
                                             <Button
                                                 size="sm"
                                                 color="secondary"
                                                 iconLeading={Truck01}
-                                                href={`/replenishment/requests/new?variant=${v.id}`}
+                                                href={requestHref(v.id, warehouse.id)}
                                                 className="whitespace-nowrap"
                                             >
                                                 Request from warehouse

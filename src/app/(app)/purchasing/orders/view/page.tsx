@@ -105,7 +105,7 @@ function PurchaseOrderDetailPage() {
                         <Button color="secondary" size="lg" iconLeading={Download01} onPress={() => downloadPOCsv(po, exportData)}>
                             Download PO
                         </Button>
-                        {po.status === "created" && scope.canManage && !editing && (
+                        {po.status === "created" && scope.canManagePurchasing && !editing && (
                             <>
                                 <Button color="secondary" size="lg" iconLeading={Edit05} onPress={startEdit}>
                                     Edit lines
@@ -155,7 +155,7 @@ function PurchaseOrderDetailPage() {
 
             <Card>
                 <dl className="grid grid-cols-2 gap-5 lg:grid-cols-4">
-                    <Field label="Vendor">{vendor ? <Link href={`/purchasing/vendors/view?id=${vendor.id}`} className="hover:underline">{vendor.name}</Link> : "—"}</Field>
+                    <Field label="Vendor">{vendor && scope.canManagePurchasing ? <Link href={`/purchasing/vendors/view?id=${vendor.id}`} className="hover:underline">{vendor.name}</Link> : (vendor?.name ?? "—")}</Field>
                     <Field label="Destination warehouse">
                         <LocationName id={po.warehouseId} />
                     </Field>

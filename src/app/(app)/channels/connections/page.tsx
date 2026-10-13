@@ -92,7 +92,7 @@ export default function ConnectionsPage() {
                 title="Connections"
                 description="Each channel plugs into the same connector: new channels are added the same way, without changing how stock works."
                 actions={
-                    scope.canManage && (
+                    scope.canManageChannels && (
                         <Button color="primary" size="md" iconLeading={Plus} onPress={() => setOpen(true)}>
                             Connect channel
                         </Button>

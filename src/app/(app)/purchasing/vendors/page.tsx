@@ -51,7 +51,7 @@ export default function VendorsPage() {
                 title="Vendors"
                 description="Who you buy from. Each vendor supplies one or more business units."
                 actions={
-                    scope.canManage && (
+                    scope.canManagePurchasing && (
                         <Button iconLeading={Plus} size="lg" onPress={() => setAdding(true)}>
                             Add vendor
                         </Button>

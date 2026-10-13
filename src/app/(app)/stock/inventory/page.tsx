@@ -2,20 +2,17 @@
 
 import { useMemo, useState } from "react";
 import { AlertTriangle, CurrencyDollar, LayersThree01, RefreshCcw01, SearchLg, Truck01, XCircle } from "@untitledui/icons";
-import type { Key } from "react-aria-components";
 import { Empty } from "@/components/app/empty";
 import { FilterPills } from "@/components/app/filter-pills";
-import { LocationName, VariantCell } from "@/components/app/item-cell";
+import { VariantCell } from "@/components/app/item-cell";
 import { PageHeader } from "@/components/app/page-header";
 import { StatCard } from "@/components/app/stat-card";
 import { AdjustmentModal } from "@/components/app/stock/adjustment-modal";
-import { coverAt, formatCover, isLowStock, locationItems } from "@/components/app/stock/stock-utils";
-import { useActiveBuName } from "@/components/app/stock/use-stock-page";
+import { coverAt, formatCover, isLowStock } from "@/components/app/stock/stock-utils";
 import { Table, TableCard } from "@/components/application/table/table";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
-import { Select } from "@/components/base/select/select";
 import { useRequiredScope } from "@/hooks/use-session";
 import { formatCurrency, formatNumber } from "@/lib/format";
 import { normalize } from "@/lib/selectors";
@@ -26,20 +23,20 @@ type Filter = "all" | "low" | "issues";
 
 export default function InventoryPage() {
     const scope = useRequiredScope();
-    const eyebrow = useActiveBuName();
     const products = useAppStore((s) => s.products);
     const variants = useAppStore((s) => s.variants);
     const stockLevels = useAppStore((s) => s.stockLevels);
     const allLocations = useAppStore((s) => s.locations);
     const counts = useAppStore((s) => s.counts);
 
-    const [locationId, setLocationId] = useState<string>("all");
     const [query, setQuery] = useState("");
     const [filter, setFilter] = useState<Filter>("all");
     const [adjust, setAdjust] = useState<{ locationId: string; variantId: string } | null>(null);
     const [newAdjOpen, setNewAdjOpen] = useState(false);
 
-    const selectedLocations = locationId === "all" ? scope.locations : scope.locations.filter((l) => l.id === locationId);
+    // The shell (RequireLocation) guarantees a location here.
+    const location = scope.activeLocation!;
+    const selectedLocations = useMemo(() => [location], [location]);
 
     const rows = useMemo(() => {
         const locIds = new Set(selectedLocations.map((l) => l.id));
@@ -93,14 +90,13 @@ export default function InventoryPage() {
     );
 
     const pendingOpening = selectedLocations.filter((l) => !l.openingCountDone);
-    const showLocation = locationId === "all" && scope.locations.length > 1;
 
     return (
         <div className="flex flex-col gap-6">
             <PageHeader
-                eyebrow={eyebrow}
+                eyebrow={`${location.name} · ${location.type === "store" ? "Store" : "Warehouse"}`}
                 title="Inventory"
-                description="Stock by location in each state. Only Available is sellable."
+                description={`Stock at ${location.name} in each state. Only Available is sellable.`}
                 className="mb-0"
                 actions={
                     <Button size="lg" onPress={() => setNewAdjOpen(true)}>
@@ -127,7 +123,7 @@ export default function InventoryPage() {
                                 </p>
                             </div>
                         </div>
-                        <Button size="md" color="secondary" href={open ? `/stock/counts/view?id=${open.id}` : `/stock/counts?start=${l.id}`}>
+                        <Button size="md" color="secondary" href={open ? `/stock/control/count?id=${open.id}` : "/stock/control?start=1"}>
                             {open ? (open.status === "submitted" ? "View count" : `Continue ${open.number}`) : "Start opening count"}
                         </Button>
                     </div>
@@ -159,19 +155,6 @@ export default function InventoryPage() {
                     ]}
                 />
                 <div className="flex flex-col gap-3 sm:flex-row">
-                    <Select
-                        aria-label="Location"
-                        className="sm:w-64"
-                        items={[{ id: "all", label: "All my locations" }, ...locationItems(scope.locations)]}
-                        selectedKey={locationId}
-                        onSelectionChange={(k: Key | null) => k && setLocationId(String(k))}
-                    >
-                        {(item) => (
-                            <Select.Item id={item.id} supportingText={item.supportingText}>
-                                {item.label}
-                            </Select.Item>
-                        )}
-                    </Select>
                     <Input
                         aria-label="Search"
                         placeholder="Search item, SKU or barcode"
@@ -197,7 +180,6 @@ export default function InventoryPage() {
                     <Table aria-label="Inventory" className="min-w-[960px]">
                         <Table.Header>
                             <Table.Head label="Item" isRowHeader />
-                            {showLocation && <Table.Head label="Location" className="px-3" />}
                             <Table.Head label="Available" className="px-3" />
                             <Table.Head label="In Transit" className="px-3" />
                             <Table.Head label="Returns" className="px-3" />
@@ -206,17 +188,12 @@ export default function InventoryPage() {
                             <Table.Head label="Days of cover" className="px-3" />
                             <Table.Head label="" className="pl-3" />
                         </Table.Header>
-                        <Table.Body items={visible} dependencies={[showLocation]}>
+                        <Table.Body items={visible}>
                             {(r) => (
                                 <Table.Row id={r.id}>
                                     <Table.Cell className="max-w-[280px] pr-3">
                                         <VariantCell variantId={r.variant.id} />
                                     </Table.Cell>
-                                    {showLocation && (
-                                        <Table.Cell className="px-3">
-                                            <LocationName id={r.location.id} />
-                                        </Table.Cell>
-                                    )}
                                     <Table.Cell className={cx("px-3 font-semibold", r.low ? "text-error-primary" : "text-primary")}>
                                         {formatNumber(r.stock.available)}
                                     </Table.Cell>
@@ -248,7 +225,7 @@ export default function InventoryPage() {
             </TableCard.Root>
 
             <AdjustmentModal isOpen={!!adjust} onOpenChange={(o) => !o && setAdjust(null)} locationId={adjust?.locationId} variantId={adjust?.variantId} />
-            <AdjustmentModal isOpen={newAdjOpen} onOpenChange={setNewAdjOpen} locationId={locationId !== "all" ? locationId : undefined} />
+            <AdjustmentModal isOpen={newAdjOpen} onOpenChange={setNewAdjOpen} locationId={location.id} />
         </div>
     );
 }

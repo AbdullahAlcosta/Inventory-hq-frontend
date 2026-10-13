@@ -61,7 +61,7 @@ function VendorDetailPage() {
                 eyebrow="Vendor"
                 title={vendor.name}
                 actions={
-                    scope.canManage && (
+                    scope.canManagePurchasing && (
                         <>
                             <Button color="secondary" size="lg" iconLeading={Edit05} onPress={() => setEditing(true)}>
                                 Edit

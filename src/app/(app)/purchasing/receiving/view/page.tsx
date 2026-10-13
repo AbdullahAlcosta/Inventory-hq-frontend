@@ -72,7 +72,8 @@ function ReceivePOPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [po?.id, po?.lines.length, variants, products]);
 
-    if (!po || !scope.locationIds.includes(po.warehouseId) || !(scope.canManage || scope.isWarehouseLevel)) {
+    // Staff of this PO's warehouse, plus executives.
+    if (!po || !(scope.isExecutive || (scope.canSeePurchasing && scope.locationIds.includes(po.warehouseId)))) {
         return (
             <div>
                 <PageHeader backHref="/purchasing/receiving" backLabel="Receiving" title="Purchase order not found" />

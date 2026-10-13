@@ -11,6 +11,16 @@ export const useActiveBuName = () => {
     return ids.length === 1 ? (businessUnits.find((b) => b.id === ids[0])?.name ?? "") : "All business units";
 };
 
+/** Page eyebrow for location-aware pages: the picked location, its business unit, or "All locations". */
+export const useActiveContextName = () => {
+    const scope = useScope();
+    const businessUnits = useAppStore((s) => s.businessUnits);
+    if (!scope) return "";
+    if (scope.activeLocation) return `${scope.activeLocation.name} · ${scope.activeLocation.type === "store" ? "Store" : "Warehouse"}`;
+    if (scope.context.startsWith("bu:")) return businessUnits.find((b) => b.id === scope.context.slice(3))?.name ?? "";
+    return "All locations";
+};
+
 /** Downloads rows as a CSV file in the browser. */
 export const downloadCsv = (fileName: string, rows: (string | number | null | undefined)[][]) => {
     const escape = (v: string | number | null | undefined) => {

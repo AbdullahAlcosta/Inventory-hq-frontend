@@ -68,7 +68,7 @@ export default function ProductsPage() {
                 title="Products"
                 description="One record per product. Flavors, colors, strengths and sizes are variants."
                 actions={
-                    scope.canManage && (
+                    scope.canManageCatalog && (
                         <>
                             <Button color="secondary" size="md" iconLeading={Upload01} href="/catalog/import">
                                 Bulk import
@@ -135,9 +135,9 @@ export default function ProductsPage() {
                     <Empty
                         icon={Package}
                         title={q ? "No products match your search" : "No products here yet"}
-                        description={q ? "Try a brand, SKU or scan a barcode." : scope.canManage ? "Create a product or import a list from your POS." : "Ask your manager to add products."}
+                        description={q ? "Try a brand, SKU or scan a barcode." : scope.canManageCatalog ? "Create a product or import a list from your POS." : "Ask a warehouse manager or an executive to add products."}
                         action={
-                            scope.canManage && !q ? (
+                            scope.canManageCatalog && !q ? (
                                 <Button color="primary" size="md" iconLeading={Plus} href="/catalog/products/new">
                                     New product
                                 </Button>

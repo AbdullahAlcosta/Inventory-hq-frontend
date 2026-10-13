@@ -10,10 +10,11 @@ import { EmployeeName, LocationName, VariantCell } from "@/components/app/item-c
 import { ConfirmDialog } from "@/components/app/modal-dialog";
 import { PageHeader } from "@/components/app/page-header";
 import { HistoryTimeline, LineTable, Stepper, Td } from "@/components/app/purchasing/flow-ui";
-import { canWorkStore, canWorkWarehouse, requestStatusLabel, requestSteps } from "@/components/app/replenishment/request-utils";
+import { canConfirmReceipt, canFulfil, isStoreToStore, requestStatusLabel, requestSteps } from "@/components/app/replenishment/request-utils";
 import { ScanQtyEditor } from "@/components/app/replenishment/scan-qty-editor";
 import { StatusBadge } from "@/components/app/status-badge";
 import { toast } from "@/components/app/toast";
+import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { useRequiredScope } from "@/hooks/use-session";
 import { formatDateTime, formatNumber } from "@/lib/format";
@@ -29,6 +30,7 @@ function StoreRequestDetailPage() {
     const r = useAppStore((s) => s.storeRequests.find((x) => x.id === id));
     const products = useAppStore((s) => s.products);
     const variants = useAppStore((s) => s.variants);
+    const locations = useAppStore((s) => s.locations);
     const pickRequest = useAppStore((s) => s.pickRequest);
     const packRequest = useAppStore((s) => s.packRequest);
     const shipRequest = useAppStore((s) => s.shipRequest);
@@ -49,8 +51,11 @@ function StoreRequestDetailPage() {
         );
     }
 
-    const warehouseSide = canWorkWarehouse(scope, r);
-    const storeSide = canWorkStore(scope, r);
+    const sendingSide = canFulfil(scope, r);
+    const storeSide = canConfirmReceipt(scope, r);
+    const sourceName = locations.find((l) => l.id === r.sourceId)?.name ?? "the sending location";
+    const storeName = locations.find((l) => l.id === r.storeId)?.name ?? "the store";
+    const storeToStore = isStoreToStore(r, locations);
     const requestedUnits = r.lines.reduce((a, l) => a + l.requestedQty, 0);
     const shippedUnits = r.lines.reduce((a, l) => a + l.shippedQty, 0);
     const receivedUnits = r.lines.reduce((a, l) => a + l.receivedQty, 0);
@@ -73,7 +78,16 @@ function StoreRequestDetailPage() {
                 backLabel="Store Requests"
                 eyebrow={
                     <>
-                        <LocationName id={r.sourceId} /> → <LocationName id={r.storeId} />
+                        <span className="inline-flex flex-wrap items-center gap-2">
+                            <span>
+                                <LocationName id={r.sourceId} /> → <LocationName id={r.storeId} />
+                            </span>
+                            {storeToStore && (
+                                <Badge type="pill-color" color="blue" size="sm">
+                                    Store → store
+                                </Badge>
+                            )}
+                        </span>
                     </>
                 }
                 title={
@@ -85,24 +99,24 @@ function StoreRequestDetailPage() {
                 actions={
                     mode === null && (
                         <>
-                            {r.status === "requested" && warehouseSide && (
+                            {r.status === "requested" && sendingSide && (
                                 <Button size="lg" iconLeading={Package} onPress={() => startMode("pick")}>
                                     Pick
                                 </Button>
                             )}
-                            {r.status === "picked" && warehouseSide && (
+                            {r.status === "picked" && sendingSide && (
                                 <Button
                                     size="lg"
                                     iconLeading={PackageCheck}
                                     onPress={() => {
                                         packRequest(r.id);
-                                        toast.success(`${r.number} packed`, "Ship it when it leaves the warehouse.");
+                                        toast.success(`${r.number} packed`, `Ship it when it leaves ${sourceName}.`);
                                     }}
                                 >
                                     Mark packed
                                 </Button>
                             )}
-                            {r.status === "packed" && warehouseSide && (
+                            {r.status === "packed" && sendingSide && (
                                 <Button size="lg" iconLeading={Truck01} onPress={() => setDialog("ship")}>
                                     Ship
                                 </Button>
@@ -120,6 +134,12 @@ function StoreRequestDetailPage() {
             <Card>
                 <Stepper steps={requestSteps} current={r.status} history={r.history} />
             </Card>
+
+            {(r.status === "requested" || r.status === "picked" || r.status === "packed") && !sendingSide && (
+                <p className="rounded-xl bg-primary px-4 py-3 text-sm text-secondary ring-1 ring-secondary">
+                    Waiting on {sourceName} to {r.status === "requested" ? "pick" : r.status === "picked" ? "pack" : "ship"} this request.
+                </p>
+            )}
 
             {r.status === "shipped" && !storeSide && (
                 <p className="rounded-xl bg-primary px-4 py-3 text-sm text-secondary ring-1 ring-secondary">
@@ -179,11 +199,12 @@ function StoreRequestDetailPage() {
 
             <Card>
                 <dl className="grid grid-cols-2 gap-5 lg:grid-cols-4">
-                    <Field label="Store">
+                    <Field label="Requesting store">
                         <LocationName id={r.storeId} />
                     </Field>
-                    <Field label="Warehouse">
+                    <Field label="Sending location">
                         <LocationName id={r.sourceId} />
+                        <span className="block text-sm font-normal text-tertiary">{storeToStore ? "Store" : "Warehouse"}</span>
                     </Field>
                     <Field label="Requested by">
                         <EmployeeName id={r.createdBy} />
@@ -243,7 +264,7 @@ function StoreRequestDetailPage() {
                 isOpen={dialog === "ship"}
                 onOpenChange={(o) => setDialog(o ? "ship" : null)}
                 title={`Ship ${r.number}?`}
-                description={`${formatNumber(shippedUnits)} units leave the warehouse. Stock moves to In Transit until the store confirms receipt.`}
+                description={`${formatNumber(shippedUnits)} units leave ${sourceName}. Stock moves to In Transit until ${storeName} confirms receipt.`}
                 confirmLabel="Ship"
                 onConfirm={() => {
                     shipRequest(r.id);
@@ -259,14 +280,14 @@ function StoreRequestDetailPage() {
                 description={
                     confirmShort.length
                         ? "What arrived becomes Available. The missing units go to Approvals for a manager to review."
-                        : "Everything arrived. It all becomes Available at the store."
+                        : `Everything arrived. It all becomes Available at ${storeName}.`
                 }
                 confirmLabel="Confirm receipt"
                 onConfirm={() => {
                     confirmRequest(r.id, values);
                     setMode(null);
                     if (confirmShort.length) toast.warning(`${r.number} confirmed`, "Shortfall sent to Approvals.");
-                    else toast.success(`${r.number} confirmed`, "Stock is now Available at the store.");
+                    else toast.success(`${r.number} confirmed`, `Stock is now Available at ${storeName}.`);
                 }}
             >
                 {confirmShort.length > 0 && (

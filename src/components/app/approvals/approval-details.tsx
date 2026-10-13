@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/app/status-badge";
 import { VariantPicker } from "@/components/app/variant-picker";
 import { Button } from "@/components/base/buttons/button";
 import { InputNumber } from "@/components/base/input/input-number";
+import { useRequiredScope } from "@/hooks/use-session";
 import { formatCurrency, formatDate, formatDateTime, formatNumber, formatSigned, pluralize } from "@/lib/format";
 import { productOf, stockAt } from "@/lib/selectors";
 import type { Approval, ApprovalPayload } from "@/lib/types";
@@ -21,6 +22,19 @@ type P<T extends ApprovalPayload["type"]> = Extract<ApprovalPayload, { type: T }
 /* ------------------------------------------------------------------ */
 /* Small building blocks                                               */
 /* ------------------------------------------------------------------ */
+
+/** Link into purchasing or channels, shown as plain text to people who can't open those screens. */
+export const ScopedLink = ({ area, href, className, children }: { area: "purchasing" | "channels"; href: string; className?: string; children: ReactNode }) => {
+    const scope = useRequiredScope();
+    const allowed = area === "purchasing" ? scope.canSeePurchasing : scope.canManageChannels;
+    return allowed ? (
+        <Link href={href} className={className}>
+            {children}
+        </Link>
+    ) : (
+        <span>{children}</span>
+    );
+};
 
 export const FieldGrid = ({ children }: { children: ReactNode }) => <dl className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">{children}</dl>;
 
@@ -216,9 +230,9 @@ export const UnexpectedDetail = ({ payload, linkTarget, onLinkTarget, editable }
             <FieldGrid>
                 <Field label="Purchase order">
                     {po ? (
-                        <Link href={`/purchasing/orders/view?id=${po.id}`} className="text-brand-secondary hover:underline">
+                        <ScopedLink area="purchasing" href={`/purchasing/orders/view?id=${po.id}`} className="text-brand-secondary hover:underline">
                             {po.number}
-                        </Link>
+                        </ScopedLink>
                     ) : (
                         "—"
                     )}
@@ -294,9 +308,9 @@ export const PartialPoDetail = ({ payload }: { payload: P<"partial_po"> }) => {
         <>
             <FieldGrid>
                 <Field label="Purchase order">
-                    <Link href={`/purchasing/orders/view?id=${po.id}`} className="text-brand-secondary hover:underline">
+                    <ScopedLink area="purchasing" href={`/purchasing/orders/view?id=${po.id}`} className="text-brand-secondary hover:underline">
                         {po.number}
-                    </Link>
+                    </ScopedLink>
                 </Field>
                 <Field label="Vendor">{vendor?.name ?? "—"}</Field>
                 <Field label="Warehouse">
@@ -336,9 +350,9 @@ export const MismatchDetail = ({ payload }: { payload: P<"mismatch"> }) => {
             <FieldGrid>
                 <Field label="Connection">
                     {connection ? (
-                        <Link href={`/channels/connections/view?id=${connection.id}`} className="hover:underline">
+                        <ScopedLink area="channels" href={`/channels/connections/view?id=${connection.id}`} className="hover:underline">
                             {connection.name}
-                        </Link>
+                        </ScopedLink>
                     ) : (
                         "—"
                     )}
@@ -430,9 +444,9 @@ export const SyncDetail = ({ approval, payload }: { approval: Approval; payload:
             <FieldGrid>
                 <Field label="Connection">
                     {connection ? (
-                        <Link href={`/channels/connections/view?id=${connection.id}`} className="hover:underline">
+                        <ScopedLink area="channels" href={`/channels/connections/view?id=${connection.id}`} className="hover:underline">
                             {connection.name}
-                        </Link>
+                        </ScopedLink>
                     ) : (
                         "—"
                     )}

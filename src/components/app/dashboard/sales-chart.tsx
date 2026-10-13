@@ -13,7 +13,7 @@ const dayKey = (d: Date) => d.toISOString().slice(0, 10);
 const shortDate = (key: string) => new Date(`${key}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 /** Last 30 days of revenue for the given stores, with the prior 30 days for comparison. */
-export const SalesChart = ({ storeIds }: { storeIds: string[] }) => {
+export const SalesChart = ({ storeIds, description = "Revenue across your stores, last 30 days." }: { storeIds: string[]; description?: string }) => {
     const salesHistory = useAppStore((s) => s.salesHistory);
 
     const { data, total, previous, units } = useMemo(() => {
@@ -41,7 +41,7 @@ export const SalesChart = ({ storeIds }: { storeIds: string[] }) => {
     const change = previous > 0 ? ((total - previous) / previous) * 100 : null;
 
     return (
-        <Card title="Sales" description="Revenue across your stores, last 30 days.">
+        <Card title="Sales" description={description}>
             <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
                 <div>
                     <p className="text-display-sm font-semibold text-primary tabular-nums">{formatCurrency(total)}</p>

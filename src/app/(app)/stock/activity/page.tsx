@@ -7,7 +7,7 @@ import { FilterPills } from "@/components/app/filter-pills";
 import { EmployeeName, LocationName } from "@/components/app/item-cell";
 import { PageHeader } from "@/components/app/page-header";
 import { signedClass } from "@/components/app/stock/stock-utils";
-import { downloadCsv, useActiveBuName } from "@/components/app/stock/use-stock-page";
+import { downloadCsv, useActiveContextName } from "@/components/app/stock/use-stock-page";
 import { Table, TableCard } from "@/components/application/table/table";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
@@ -38,7 +38,7 @@ const PAGE = 100;
 
 export default function ActivityPage() {
     const scope = useRequiredScope();
-    const eyebrow = useActiveBuName();
+    const eyebrow = useActiveContextName();
     const activity = useAppStore((s) => s.activity);
     const employees = useAppStore((s) => s.employees);
     const locations = useAppStore((s) => s.locations);

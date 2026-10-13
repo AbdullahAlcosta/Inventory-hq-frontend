@@ -145,12 +145,12 @@ export default function ImportPage() {
         setFileName(null);
     };
 
-    if (!scope.canManage) {
+    if (!scope.canManageCatalog) {
         return (
             <>
                 <PageHeader eyebrow="Catalog" title="Bulk import" />
                 <Card>
-                    <Empty icon={Lock01} title="Managers import products" description="Ask your manager to run a bulk import." />
+                    <Empty icon={Lock01} title="Only catalog managers import products" description="Ask a warehouse manager or an executive to run a bulk import." />
                 </Card>
             </>
         );

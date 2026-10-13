@@ -144,12 +144,12 @@ export default function NewProductPage() {
         router.push(`/catalog/products/view?id=${target.id}&${params.toString()}`);
     };
 
-    if (!scope.canManage) {
+    if (!scope.canManageCatalog) {
         return (
             <>
                 <PageHeader eyebrow="Catalog" title="New product" backHref="/catalog/products" backLabel="Products" />
                 <Card>
-                    <Empty icon={Lock01} title="Managers create products" description="Ask your manager to add a product or a new variant." />
+                    <Empty icon={Lock01} title="Only catalog managers create products" description="Ask a warehouse manager or an executive to add a product or a new variant." />
                 </Card>
             </>
         );

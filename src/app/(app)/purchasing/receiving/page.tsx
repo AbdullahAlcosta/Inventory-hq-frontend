@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ArrowRight, PackageCheck, Scan } from "@untitledui/icons";
 import { Card } from "@/components/app/card";
 import { Empty } from "@/components/app/empty";
-import { LocationName } from "@/components/app/item-cell";
 import { PageHeader } from "@/components/app/page-header";
 import { UnitsProgress } from "@/components/app/purchasing/flow-ui";
 import { poTotals } from "@/components/app/purchasing/po-utils";
@@ -21,10 +20,11 @@ export default function ReceivingPage() {
     const vendors = useAppStore((s) => s.vendors);
     const products = useAppStore((s) => s.products);
     const variants = useAppStore((s) => s.variants);
-    const businessUnits = useAppStore((s) => s.businessUnits);
     const data = { products, variants };
 
-    const mine = useMemo(() => purchaseOrders.filter((p) => scope.activeLocationIds.includes(p.warehouseId)), [purchaseOrders, scope.activeLocationIds]);
+    // Gated to one warehouse by the app shell.
+    const warehouse = scope.activeLocation!;
+    const mine = useMemo(() => purchaseOrders.filter((p) => p.warehouseId === warehouse.id), [purchaseOrders, warehouse.id]);
     const ready = useMemo(
         () =>
             mine
@@ -42,11 +42,14 @@ export default function ReceivingPage() {
         [mine],
     );
 
-    const buName = scope.activeBusinessUnitIds.length === 1 ? businessUnits.find((b) => b.id === scope.activeBusinessUnitIds[0])?.name : "Purchasing";
-
     return (
         <div className="flex flex-col gap-8">
-            <PageHeader className="mb-0" eyebrow={buName} title="Receiving" description="Scan deliveries against their purchase order. Case barcodes count as the full case." />
+            <PageHeader
+                className="mb-0"
+                eyebrow="Purchasing"
+                title={`Receiving · ${warehouse.name}`}
+                description={`Scan deliveries to ${warehouse.name} against their purchase order. Case barcodes count as the full case.`}
+            />
 
             <section>
                 <h2 className="mb-3 text-lg font-semibold text-primary">Ready to receive</h2>
@@ -95,9 +98,7 @@ export default function ReceivingPage() {
                                         </div>
                                     )}
                                     <div className="mt-auto flex items-center justify-between border-t border-secondary pt-4">
-                                        <span className="text-sm text-tertiary">
-                                            <LocationName id={po.warehouseId} />
-                                        </span>
+                                        <span className="text-sm text-tertiary">{po.sentAt ? `Sent ${formatDate(po.sentAt)}` : ""}</span>
                                         <span className="flex shrink-0 items-center gap-2 rounded-lg bg-gray-950 px-4 py-2.5 text-sm font-semibold whitespace-nowrap text-white">
                                             <Scan className="size-4" />
                                             {po.status === "receiving" ? "Continue" : "Start receiving"}
@@ -121,7 +122,6 @@ export default function ReceivingPage() {
                             <Table.Header>
                                 <Table.Head label="PO" isRowHeader />
                                 <Table.Head label="Vendor" />
-                                <Table.Head label="Warehouse" />
                                 <Table.Head label="Received" />
                                 <Table.Head label="Units" />
                                 <Table.Head label="Status" />
@@ -133,9 +133,6 @@ export default function ReceivingPage() {
                                         <Table.Row id={po.id} href={`/purchasing/orders/view?id=${po.id}`} className="cursor-pointer">
                                             <Table.Cell className="font-semibold whitespace-nowrap text-primary">{po.number}</Table.Cell>
                                             <Table.Cell className="whitespace-nowrap">{vendors.find((v) => v.id === po.vendorId)?.name}</Table.Cell>
-                                            <Table.Cell className="whitespace-nowrap">
-                                                <LocationName id={po.warehouseId} />
-                                            </Table.Cell>
                                             <Table.Cell className="whitespace-nowrap">{po.receivedAt ? formatDate(po.receivedAt) : "—"}</Table.Cell>
                                             <Table.Cell className="whitespace-nowrap tabular-nums">
                                                 {formatNumber(t.received)} / {formatNumber(t.units)}

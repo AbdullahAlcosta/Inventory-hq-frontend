@@ -27,12 +27,20 @@ export default function PurchaseOrdersPage() {
     const products = useAppStore((s) => s.products);
     const variants = useAppStore((s) => s.variants);
     const businessUnits = useAppStore((s) => s.businessUnits);
+    const locations = useAppStore((s) => s.locations);
     const [filter, setFilter] = useState<Filter>("all");
     const [query, setQuery] = useState("");
 
+    // A picked warehouse narrows to that warehouse; otherwise every warehouse in scope for the active business unit(s).
+    const warehouseIds = useMemo(() => {
+        if (scope.activeLocation?.type === "warehouse") return [scope.activeLocation.id];
+        return locations.filter((l) => l.type === "warehouse" && scope.locationIds.includes(l.id) && scope.activeBusinessUnitIds.includes(l.businessUnitId)).map((l) => l.id);
+    }, [locations, scope.activeLocation, scope.locationIds, scope.activeBusinessUnitIds]);
+    const singleWarehouse = warehouseIds.length === 1 ? locations.find((l) => l.id === warehouseIds[0]) : undefined;
     const buName = scope.activeBusinessUnitIds.length === 1 ? businessUnits.find((b) => b.id === scope.activeBusinessUnitIds[0])?.name : "Purchasing";
+    const eyebrow = scope.activeLocation?.type === "warehouse" ? scope.activeLocation.name : buName;
 
-    const scoped = useMemo(() => purchaseOrders.filter((p) => scope.activeLocationIds.includes(p.warehouseId)), [purchaseOrders, scope.activeLocationIds]);
+    const scoped = useMemo(() => purchaseOrders.filter((p) => warehouseIds.includes(p.warehouseId)), [purchaseOrders, warehouseIds]);
 
     const rows = useMemo(() => {
         const q = normalize(query);
@@ -55,11 +63,15 @@ export default function PurchaseOrdersPage() {
     return (
         <div>
             <PageHeader
-                eyebrow={buName}
+                eyebrow={eyebrow}
                 title="Purchase Orders"
-                description="Orders to vendors for your warehouses. Placing the order with the vendor happens outside Inventory HQ."
+                description={
+                    scope.canManagePurchasing
+                        ? `Orders to vendors for ${singleWarehouse ? singleWarehouse.name : "your warehouses"}. Placing the order with the vendor happens outside Inventory HQ.`
+                        : `Orders coming in to ${singleWarehouse ? singleWarehouse.name : "your warehouses"}. Open one to see its lines or receive it.`
+                }
                 actions={
-                    scope.canManage && (
+                    scope.canManagePurchasing && (
                         <Button iconLeading={Plus} size="lg" href="/purchasing/orders/new">
                             New PO
                         </Button>
@@ -77,7 +89,7 @@ export default function PurchaseOrdersPage() {
                     <Input aria-label="Search purchase orders" icon={SearchLg} placeholder="Search PO number or vendor" value={query} onChange={setQuery} className="md:max-w-xs" />
                 </div>
                 {rows.length === 0 ? (
-                    <Empty icon={ShoppingCart01} title="No purchase orders" description={query || filter !== "all" ? "Try a different filter or search." : "Create a PO to order stock for your warehouse."} />
+                    <Empty icon={ShoppingCart01} title="No purchase orders" description={query || filter !== "all" ? "Try a different filter or search." : scope.canManagePurchasing ? "Create a PO to order stock for your warehouse." : "Purchase orders for your warehouse will show up here."} />
                 ) : (
                     <Table aria-label="Purchase orders">
                         <Table.Header>

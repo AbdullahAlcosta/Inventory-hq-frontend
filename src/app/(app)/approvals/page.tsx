@@ -100,7 +100,7 @@ function ApprovalsView() {
                 description="Everything waiting on a decision for your locations. Each decision records who and when."
             />
 
-            {createdPos.length > 0 && (
+            {createdPos.length > 0 && scope.canSeePurchasing && (
                 <div className="mb-5 flex items-start gap-3 rounded-2xl bg-primary p-4 shadow-xs ring-1 ring-secondary">
                     <CheckCircle className="mt-0.5 size-5 shrink-0 text-fg-success-primary" />
                     <div className="min-w-0 flex-1 text-sm">

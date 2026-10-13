@@ -1,7 +1,6 @@
 "use client";
 
 import { type ReactNode, useEffect, useState } from "react";
-import Link from "next/link";
 import { Field } from "@/components/app/card";
 import { EmployeeName, LocationName } from "@/components/app/item-cell";
 import { StatusBadge } from "@/components/app/status-badge";
@@ -13,7 +12,7 @@ import { formatDateTime, timeAgo } from "@/lib/format";
 import type { Approval } from "@/lib/types";
 import { type ApprovalDecision, useAppStore } from "@/store/app-store";
 import { approvalTypeMeta } from "./approval-meta";
-import { AdjustmentDetail, CountDetail, DuplicateDetail, FieldGrid, MismatchDetail, PartialPoDetail, ReorderDetail, Section, SyncDetail, UnexpectedDetail } from "./approval-details";
+import { AdjustmentDetail, CountDetail, DuplicateDetail, FieldGrid, MismatchDetail, PartialPoDetail, ReorderDetail, ScopedLink, Section, SyncDetail, UnexpectedDetail } from "./approval-details";
 
 interface ApprovalReviewProps {
     approvalId: string | null;
@@ -226,9 +225,9 @@ const ReviewBody = ({ approval, onClose, onPosCreated }: { approval: Approval; o
                             <Field label="Decided at">{approval.decidedAt ? formatDateTime(approval.decidedAt) : "—"}</Field>
                             {createdPo && (
                                 <Field label="Purchase order">
-                                    <Link href={`/purchasing/orders/view?id=${createdPo.id}`} className="text-brand-secondary hover:underline">
+                                    <ScopedLink area="purchasing" href={`/purchasing/orders/view?id=${createdPo.id}`} className="text-brand-secondary hover:underline">
                                         {createdPo.number}
-                                    </Link>
+                                    </ScopedLink>
                                 </Field>
                             )}
                             <Field label="Note" className="sm:col-span-2">

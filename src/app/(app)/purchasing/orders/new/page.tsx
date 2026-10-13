@@ -30,6 +30,7 @@ function NewPurchaseOrder() {
     const vendors = useAppStore((s) => s.vendors);
     const products = useAppStore((s) => s.products);
     const variants = useAppStore((s) => s.variants);
+    const locations = useAppStore((s) => s.locations);
     const createPurchaseOrder = useAppStore((s) => s.createPurchaseOrder);
 
     const vendorOptions = useMemo(() => vendors.filter((v) => v.businessUnitIds.some((b) => scope.activeBusinessUnitIds.includes(b))).sort((a, b) => a.name.localeCompare(b.name)), [vendors, scope.activeBusinessUnitIds]);
@@ -39,18 +40,29 @@ function NewPurchaseOrder() {
         return v && vendorOptions.some((x) => x.id === v) ? v : null;
     });
     const vendor = vendors.find((v) => v.id === vendorId);
-    const warehouseOptions = useMemo(() => scope.warehouses.filter((w) => vendor?.businessUnitIds.includes(w.businessUnitId)), [scope.warehouses, vendor]);
-    const [warehouseId, setWarehouseId] = useState<string | null>(null);
+    // Every warehouse this person works with in the active business unit(s) — not just the picked location, so a PO
+    // can be raised from a store context too.
+    const scopedWarehouses = useMemo(
+        () => locations.filter((l) => l.type === "warehouse" && scope.locationIds.includes(l.id) && scope.activeBusinessUnitIds.includes(l.businessUnitId)),
+        [locations, scope.locationIds, scope.activeBusinessUnitIds],
+    );
+    const warehouseOptions = useMemo(() => scopedWarehouses.filter((w) => vendor?.businessUnitIds.includes(w.businessUnitId)), [scopedWarehouses, vendor]);
+    const activeWarehouseId = scope.activeLocation?.type === "warehouse" ? scope.activeLocation.id : null;
+    const [warehouseId, setWarehouseId] = useState<string | null>(activeWarehouseId);
     const warehouse = warehouseOptions.find((w) => w.id === warehouseId);
     const [lines, setLines] = useState<DraftLine[]>([]);
     const [notes, setNotes] = useState("");
     const [touched, setTouched] = useState(false);
 
-    // Default the warehouse when there's only one choice; reset it if the vendor changes to a different BU.
+    // Default to the warehouse picked in the Location switcher, else the only choice; reset it if the vendor changes to a different BU.
     useEffect(() => {
+        if (!vendor) return;
         if (warehouseId && !warehouseOptions.some((w) => w.id === warehouseId)) setWarehouseId(null);
-        if (!warehouseId && warehouseOptions.length === 1) setWarehouseId(warehouseOptions[0].id);
-    }, [warehouseOptions, warehouseId]);
+        if (!warehouseId) {
+            if (activeWarehouseId && warehouseOptions.some((w) => w.id === activeWarehouseId)) setWarehouseId(activeWarehouseId);
+            else if (warehouseOptions.length === 1) setWarehouseId(warehouseOptions[0].id);
+        }
+    }, [vendor, warehouseOptions, warehouseId, activeWarehouseId]);
 
     // Lines must belong to the warehouse's BU.
     useEffect(() => {
@@ -58,12 +70,12 @@ function NewPurchaseOrder() {
         setLines((ls) => ls.filter((l) => products.find((p) => p.id === variants.find((v) => v.id === l.variantId)?.productId)?.businessUnitId === warehouse.businessUnitId));
     }, [warehouse, products, variants]);
 
-    if (!scope.canManage) {
+    if (!scope.canManagePurchasing) {
         return (
             <div>
                 <PageHeader backHref="/purchasing/orders" backLabel="Purchase Orders" title="New purchase order" />
                 <Card>
-                    <p className="text-md text-tertiary">Only managers and executives can create purchase orders.</p>
+                    <p className="text-md text-tertiary">Only warehouse managers and executives can create purchase orders.</p>
                 </Card>
             </div>
         );

@@ -58,7 +58,7 @@ function ProductDetail() {
 
     // "Add as variant of…" from the create form arrives with a prefilled add-variant dialog.
     useEffect(() => {
-        if (searchParams.get("addVariant") !== "1" || !scope.canManage) return;
+        if (searchParams.get("addVariant") !== "1" || !scope.canManageCatalog) return;
         const initial: Partial<VariantDraft> = {};
         const get = (k: string) => searchParams.get(k) ?? undefined;
         if (get("name")) initial.name = get("name");
@@ -96,7 +96,7 @@ function ProductDetail() {
         { id: "overview", label: "Overview" },
         { id: "variants", label: "Variants", badge: variants.length },
         { id: "stock", label: "Stock" },
-        ...(scope.canManage ? [{ id: "channels", label: "Channels" }] : []),
+        ...(scope.canManageChannels ? [{ id: "channels", label: "Channels" }] : []),
     ];
 
     return (
@@ -120,7 +120,7 @@ function ProductDetail() {
                     </span>
                 }
                 actions={
-                    scope.canManage && (
+                    scope.canManageCatalog && (
                         <>
                             <Button color="secondary" size="md" iconLeading={archived ? RefreshCcw01 : Archive} onPress={() => setArchiveOpen(true)}>
                                 {archived ? "Activate" : "Archive"}
@@ -151,19 +151,19 @@ function ProductDetail() {
                     <OverviewTab product={product} variants={variants} />
                 </Tabs.Panel>
                 <Tabs.Panel id="variants" className="pt-6">
-                    <VariantsTab product={product} variants={variants} canManage={scope.canManage} onEdit={(v) => setVariantModal({ open: true, variant: v })} onAdd={() => setVariantModal({ open: true, variant: null })} />
+                    <VariantsTab product={product} variants={variants} canManage={scope.canManageCatalog} onEdit={(v) => setVariantModal({ open: true, variant: v })} onAdd={() => setVariantModal({ open: true, variant: null })} />
                 </Tabs.Panel>
                 <Tabs.Panel id="stock" className="pt-6">
                     <StockTab variants={variants} scope={scope} productBu={product.businessUnitId} />
                 </Tabs.Panel>
-                {scope.canManage && (
+                {scope.canManageChannels && (
                     <Tabs.Panel id="channels" className="pt-6">
                         <ChannelsTab product={product} variants={variants} scope={scope} />
                     </Tabs.Panel>
                 )}
             </Tabs>
 
-            {scope.canManage && (
+            {scope.canManageCatalog && (
                 <>
                     <ProductEditModal isOpen={editOpen} onOpenChange={setEditOpen} product={product} />
                     <VariantModal

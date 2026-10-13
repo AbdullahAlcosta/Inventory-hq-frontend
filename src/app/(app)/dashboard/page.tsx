@@ -1,10 +1,10 @@
 "use client";
 
 import { PageHeader } from "@/components/app/page-header";
-import { useEyebrow } from "@/components/app/channels/channel-utils";
-import { StoreAssociateHome, WarehouseAssociateHome } from "@/components/app/dashboard/associate-home";
-import { ManagerHome } from "@/components/app/dashboard/manager-home";
+import { StoreHome, WarehouseHome } from "@/components/app/dashboard/location-home";
+import { OverviewHome } from "@/components/app/dashboard/overview-home";
 import { useRequiredScope } from "@/hooks/use-session";
+import { useAppStore } from "@/store/app-store";
 
 const greeting = () => {
     const h = new Date().getHours();
@@ -13,29 +13,38 @@ const greeting = () => {
 
 export default function DashboardPage() {
     const scope = useRequiredScope();
-    const eyebrow = useEyebrow(scope);
+    const businessUnits = useAppStore((s) => s.businessUnits);
     const firstName = scope.user.name.split(" ")[0];
+    const hello = `${greeting()}, ${firstName}.`;
+    const location = scope.activeLocation;
+    const buName = (id: string) => businessUnits.find((b) => b.id === id)?.name ?? "";
 
-    const description = scope.isAssociate
-        ? scope.isWarehouseLevel
-            ? `Your queue at ${scope.warehouses.map((w) => w.name).join(", ") || "your warehouse"}.`
-            : `Here's what's happening at ${scope.stores.map((s) => s.name).join(", ") || "your store"}.`
-        : scope.isExecutive
-          ? "Here's how the business is doing."
-          : `Here's what's happening across your ${scope.locations.length === 1 ? "location" : `${scope.locations.length} locations`}.`;
+    if (location) {
+        const isStore = location.type === "store";
+        return (
+            <>
+                <PageHeader
+                    eyebrow={`${isStore ? "Store" : "Warehouse"} · ${buName(location.businessUnitId)}`}
+                    title={location.name}
+                    description={isStore ? `${hello} Here's what's happening at this store.` : `${hello} Here's the queue at this warehouse.`}
+                />
+                {isStore ? <StoreHome scope={scope} store={location} /> : <WarehouseHome scope={scope} warehouse={location} />}
+            </>
+        );
+    }
+
+    const onBu = scope.context.startsWith("bu:");
+    const title = onBu ? `${buName(scope.context.slice(3))} overview` : scope.isExecutive ? "Company overview" : "My locations";
+    const eyebrow = onBu ? "Business unit" : scope.isExecutive ? "All locations" : `${scope.locations.length} locations`;
 
     return (
         <>
-            <PageHeader eyebrow={eyebrow} title={`${greeting()}, ${firstName}`} description={description} />
-            {scope.isAssociate ? (
-                scope.isWarehouseLevel ? (
-                    <WarehouseAssociateHome scope={scope} />
-                ) : (
-                    <StoreAssociateHome scope={scope} />
-                )
-            ) : (
-                <ManagerHome scope={scope} />
-            )}
+            <PageHeader
+                eyebrow={eyebrow}
+                title={title}
+                description={scope.isExecutive ? `${hello} Here's how the business is doing.` : `${hello} Here's what's happening across your locations.`}
+            />
+            <OverviewHome scope={scope} />
         </>
     );
 }
