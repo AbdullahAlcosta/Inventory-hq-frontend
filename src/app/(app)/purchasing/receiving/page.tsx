@@ -98,7 +98,7 @@ export default function ReceivingPage() {
                                         <span className="text-sm text-tertiary">
                                             <LocationName id={po.warehouseId} />
                                         </span>
-                                        <span className="flex items-center gap-2 rounded-lg bg-gray-950 px-4 py-2.5 text-sm font-semibold text-white">
+                                        <span className="flex shrink-0 items-center gap-2 rounded-lg bg-gray-950 px-4 py-2.5 text-sm font-semibold whitespace-nowrap text-white">
                                             <Scan className="size-4" />
                                             {po.status === "receiving" ? "Continue" : "Start receiving"}
                                             <ArrowRight className="size-4 transition group-hover:translate-x-0.5" />

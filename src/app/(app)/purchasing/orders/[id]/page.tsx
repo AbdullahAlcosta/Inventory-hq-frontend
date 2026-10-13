@@ -57,6 +57,7 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
 
     const totals = poTotals(data, po);
     const canReceive = po.status === "sent" || po.status === "receiving";
+    const notStarted = po.status === "created" || po.status === "sent";
     const exportData = { ...data, vendor, warehouse };
 
     const startEdit = () => {
@@ -196,16 +197,14 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
                 <Card
                     title="Lines"
                     flush
-                    description={po.status === "created" || po.status === "sent" ? undefined : `${formatNumber(totals.received)} of ${formatNumber(totals.units)} units received`}
+                    description={notStarted ? undefined : `${formatNumber(totals.received)} of ${formatNumber(totals.units)} units received`}
                 >
                     <LineTable
                         columns={[
                             { label: "Item" },
                             { label: "Ordered" },
                             { label: "Unit cost" },
-                            { label: "Received" },
-                            { label: "Remaining" },
-                            { label: "Progress" },
+                            ...(notStarted ? [] : [{ label: "Received" }, { label: "Remaining" }, { label: "Progress" }]),
                             { label: "Line total", className: "text-right" },
                         ]}
                     >
@@ -227,13 +226,17 @@ export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ 
                                         </span>
                                     </Td>
                                     <Td className="whitespace-nowrap tabular-nums">{formatCurrency(l.unitCost)}</Td>
-                                    <Td className="font-medium text-primary tabular-nums">{formatNumber(l.receivedUnits)}</Td>
-                                    <Td className={remaining > 0 && (po.status === "partial" || po.status === "resolved") ? "font-semibold text-orange-600 tabular-nums" : "tabular-nums"}>
-                                        {formatNumber(remaining)}
-                                    </Td>
-                                    <Td>
-                                        <UnitsProgress value={l.receivedUnits} max={exp} />
-                                    </Td>
+                                    {!notStarted && (
+                                        <>
+                                            <Td className="font-medium text-primary tabular-nums">{formatNumber(l.receivedUnits)}</Td>
+                                            <Td className={remaining > 0 && (po.status === "partial" || po.status === "resolved") ? "font-semibold text-orange-600 tabular-nums" : "tabular-nums"}>
+                                                {formatNumber(remaining)}
+                                            </Td>
+                                            <Td>
+                                                <UnitsProgress value={l.receivedUnits} max={exp} />
+                                            </Td>
+                                        </>
+                                    )}
                                     <Td className="text-right font-medium whitespace-nowrap text-primary tabular-nums">{formatCurrency(l.orderedQty * l.unitCost)}</Td>
                                 </tr>
                             );
