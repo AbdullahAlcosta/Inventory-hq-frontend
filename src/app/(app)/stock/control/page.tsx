@@ -217,7 +217,7 @@ function StockControl() {
                 />
             </div>
 
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
                 <FilterPills<Filter>
                     value={filter}
                     onChange={setFilter}
@@ -230,7 +230,7 @@ function StockControl() {
                         { id: "rejected", label: "Rejected", count: n("rejected") },
                     ]}
                 />
-                <Input aria-label="Search" placeholder="Search number, item or note" icon={SearchLg} value={query} onChange={setQuery} className="lg:w-72" />
+                <Input aria-label="Search" placeholder="Search number, item or note" icon={SearchLg} value={query} onChange={setQuery} className="sm:w-80" />
             </div>
 
             <TableCard.Root size="sm">
@@ -238,17 +238,13 @@ function StockControl() {
                     <Empty
                         icon={ClipboardCheck}
                         title={rows.length === 0 ? "Nothing recorded yet" : "Nothing matches"}
-                        description={
-                            rows.length === 0
-                                ? `Start a count or record an adjustment for ${location.name}.`
-                                : "Try another filter or search."
-                        }
+                        description={rows.length === 0 ? `Start a count or record an adjustment for ${location.name}.` : "Try another filter or search."}
                         action={rows.length === 0 ? newAction : undefined}
                     />
                 ) : (
                     <Table
                         aria-label="Stock control history"
-                        className="min-w-[960px]"
+                        className="min-w-[900px]"
                         onRowAction={(key) => {
                             const r = rows.find((x) => x.id === key);
                             if (!r) return;
@@ -280,7 +276,7 @@ function StockControl() {
                                             </Badge>
                                         )}
                                     </Table.Cell>
-                                    <Table.Cell className="max-w-[280px] px-3">
+                                    <Table.Cell className="max-w-[240px] px-3">
                                         {r.kind === "count" ? (
                                             <span className="text-primary">{pluralize(r.count.lines.length, "item")}</span>
                                         ) : (

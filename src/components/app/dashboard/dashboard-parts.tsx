@@ -85,8 +85,11 @@ export const RequestList = ({ requests, empty, side }: { requests: StoreRequest[
         </ul>
     );
 
-/** Pending approvals the user can decide, within the active business units (and, optionally, only at some locations). */
-export const usePendingApprovals = (scope: Scope, locationIds?: string[]) => {
+/**
+ * Pending approvals the user can decide, within the active business units (and, optionally, only at some locations;
+ * `includeUnlocated` also keeps business-unit-wide items such as import duplicates).
+ */
+export const usePendingApprovals = (scope: Scope, locationIds?: string[], includeUnlocated = false) => {
     const approvals = useAppStore((s) => s.approvals);
     return useMemo(() => {
         const locs = locationIds ? new Set(locationIds) : null;
@@ -96,11 +99,11 @@ export const usePendingApprovals = (scope: Scope, locationIds?: string[]) => {
                     a.status === "pending" &&
                     scope.activeBusinessUnitIds.includes(a.businessUnitId) &&
                     canDecideApproval(scope.user, a, scope) &&
-                    (!locs || (a.locationId !== null && locs.has(a.locationId))),
+                    (!locs || (a.locationId === null ? includeUnlocated : locs.has(a.locationId))),
             )
             .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [approvals, scope, locationIds?.join()]);
+    }, [approvals, scope, locationIds?.join(), includeUnlocated]);
 };
 
 export const ApprovalsCard = ({ approvals, title = "Needs attention", description = "Top pending approvals." }: { approvals: Approval[]; title?: string; description?: string }) => (

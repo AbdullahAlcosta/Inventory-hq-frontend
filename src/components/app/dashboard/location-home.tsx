@@ -106,7 +106,7 @@ export const WarehouseHome = ({ scope, warehouse }: { scope: Scope; warehouse: L
     const purchaseOrders = useAppStore((s) => s.purchaseOrders);
     const vendors = useAppStore((s) => s.vendors);
     const metrics = useLocationMetrics([warehouse.id]).get(warehouse.id);
-    const pending = usePendingApprovals(scope, [warehouse.id]);
+    const pending = usePendingApprovals(scope, [warehouse.id], true);
 
     const toReceive = useMemo(
         () => purchaseOrders.filter((p) => p.warehouseId === warehouse.id && (p.status === "sent" || p.status === "receiving")),
@@ -182,7 +182,7 @@ export const WarehouseHome = ({ scope, warehouse }: { scope: Scope; warehouse: L
 
             {scope.canManage ? (
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                    <ApprovalsCard approvals={pending} title="Pending approvals" description={`Waiting on a decision at ${warehouse.name}.`} />
+                    <ApprovalsCard approvals={pending} title="Pending approvals" description={`Waiting on a decision at ${warehouse.name} and for its catalog.`} />
                     <RecentActivity scope={scope} limit={6} />
                 </div>
             ) : (

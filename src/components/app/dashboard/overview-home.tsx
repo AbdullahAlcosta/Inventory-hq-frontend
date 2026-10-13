@@ -56,6 +56,7 @@ export const OverviewHome = ({ scope }: { scope: Scope }) => {
         return mismatches.filter((m) => connIds.has(m.connectionId) && m.status === "open");
     }, [mismatches, connections]);
 
+    const statCount = 3 + (scope.canManage ? 1 : 0) + (scope.canSeePurchasing ? 1 : 0) + (scope.canManageChannels ? 1 : 0);
     const pendingAt = (locId: string) => pending.filter((a) => a.locationId === locId).length;
     const multiBu = scope.activeBusinessUnitIds.length > 1;
 
@@ -66,7 +67,7 @@ export const OverviewHome = ({ scope }: { scope: Scope }) => {
 
     return (
         <div className="flex flex-col gap-6">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+            <div className={cx("grid grid-cols-1 gap-4 sm:grid-cols-2", statCount % 3 === 0 ? "xl:grid-cols-3 2xl:grid-cols-6" : "xl:grid-cols-4")}>
                 {scope.canManage && (
                     <StatCard
                         label="Pending approvals"
@@ -77,7 +78,6 @@ export const OverviewHome = ({ scope }: { scope: Scope }) => {
                         hint="Waiting on your decision"
                     />
                 )}
-                <StatCard label="Available units" value={formatNumber(totals.available)} icon={LayersThree01} hint={`Across ${scope.locations.length} locations`} />
                 <StatCard label="Low stock items" value={totals.low} icon={AlertTriangle} tone={totals.low ? "error" : "default"} hint="At or below reorder point" />
                 {scope.canSeePurchasing && (
                     <StatCard label="Open POs" value={openPos.length} icon={ShoppingCart01} href="/purchasing/orders" hint={`${receiving} to receive`} />
@@ -93,7 +93,7 @@ export const OverviewHome = ({ scope }: { scope: Scope }) => {
                         hint="Channels vs our stock"
                     />
                 )}
-                <StatCard label="Inventory value" value={formatCompactCurrency(totals.value)} icon={CoinsStacked01} hint={`${formatCurrency(totals.value)} at cost`} />
+                <StatCard label="Inventory value" value={formatCompactCurrency(totals.value)} icon={CoinsStacked01} hint={`${formatNumber(totals.available)} units available · ${scope.locations.length} locations`} />
             </div>
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">

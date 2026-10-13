@@ -177,7 +177,9 @@ export default function ReorderPage() {
                                                 ) : (
                                                     <span className="text-xs whitespace-nowrap text-tertiary">Suggested · awaiting warehouse</span>
                                                 ))}
-                                            <Button size="sm" color="tertiary" iconLeading={Settings01} aria-label="Edit reorder settings" onPress={() => setEditing(r.id)} />
+                                            {scope.canManagePurchasing && (
+                                                <Button size="sm" color="tertiary" iconLeading={Settings01} aria-label="Edit reorder settings" onPress={() => setEditing(r.id)} />
+                                            )}
                                         </div>
                                     </Table.Cell>
                                 </Table.Row>
@@ -187,7 +189,7 @@ export default function ReorderPage() {
                 )}
             </TableCard.Root>
 
-            <ReorderSettingsModal variantId={editing} onClose={() => setEditing(null)} />
+            {scope.canManagePurchasing && <ReorderSettingsModal variantId={editing} onClose={() => setEditing(null)} />}
         </div>
     );
 }

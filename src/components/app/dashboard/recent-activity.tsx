@@ -11,7 +11,7 @@ import { formatSigned, timeAgo } from "@/lib/format";
 import { useAppStore } from "@/store/app-store";
 import { cx } from "@/utils/cx";
 
-/** Last few audit entries in the user's scope. */
+/** Last few audit entries in the user's scope (on one location: only what happened there). */
 export const RecentActivity = ({ scope, limit = 8 }: { scope: Scope; limit?: number }) => {
     const activity = useAppStore((s) => s.activity);
     const employees = useAppStore((s) => s.employees);
@@ -19,7 +19,7 @@ export const RecentActivity = ({ scope, limit = 8 }: { scope: Scope; limit?: num
     const entries = useMemo(() => {
         const companyPeople = new Set(employees.filter((e) => e.companyId === scope.companyId).map((e) => e.id));
         return activity
-            .filter((a) => (a.locationId ? scope.activeLocationIds.includes(a.locationId) : scope.canManage && companyPeople.has(a.by)))
+            .filter((a) => (a.locationId ? scope.activeLocationIds.includes(a.locationId) : !scope.activeLocation && scope.canManage && companyPeople.has(a.by)))
             .sort((a, b) => b.at.localeCompare(a.at))
             .slice(0, limit);
     }, [activity, employees, scope, limit]);

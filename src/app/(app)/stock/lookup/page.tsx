@@ -279,9 +279,11 @@ function ProductStockCard({
                                     </span>
                                 </th>
                             ))}
-                            <th className="px-5 py-3 text-right md:px-6">
-                                <span className="sr-only">Actions</span>
-                            </th>
+                            {canRequest && (
+                                <th className="px-5 py-3 text-right md:px-6">
+                                    <span className="sr-only">Actions</span>
+                                </th>
+                            )}
                         </tr>
                     </thead>
                     <tbody>
@@ -309,7 +311,13 @@ function ProductStockCard({
                                                 )}
                                                 {canRequest && qty > 0 && l.type === "store" && !requestFor!.own.includes(l.id) && (
                                                     <span className="mt-1 block">
-                                                        <Button size="sm" color="link-gray" href={requestHref(v.id, l.id)} className="text-xs whitespace-nowrap underline">
+                                                        <Button
+                                                            size="sm"
+                                                            color="link-gray"
+                                                            href={requestHref(v.id, l.id)}
+                                                            aria-label={`Request from ${l.name}`}
+                                                            className="text-xs whitespace-nowrap underline"
+                                                        >
                                                             Request
                                                         </Button>
                                                     </span>
@@ -317,19 +325,21 @@ function ProductStockCard({
                                             </td>
                                         );
                                     })}
-                                    <td className="px-5 py-3 text-right md:px-6">
-                                        {canRequest && warehouse && (
-                                            <Button
-                                                size="sm"
-                                                color="secondary"
-                                                iconLeading={Truck01}
-                                                href={requestHref(v.id, warehouse.id)}
-                                                className="whitespace-nowrap"
-                                            >
-                                                Request from warehouse
-                                            </Button>
-                                        )}
-                                    </td>
+                                    {canRequest && (
+                                        <td className="px-5 py-3 text-right md:px-6">
+                                            {canRequest && warehouse && (
+                                                <Button
+                                                    size="sm"
+                                                    color="secondary"
+                                                    iconLeading={Truck01}
+                                                    href={requestHref(v.id, warehouse.id)}
+                                                    className="whitespace-nowrap"
+                                                >
+                                                    Request from warehouse
+                                                </Button>
+                                            )}
+                                        </td>
+                                    )}
                                 </tr>
                             );
                         })}
