@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { type ReactNode, useMemo } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Check, ChevronSelectorVertical, LogOut01, RefreshCw01, SwitchHorizontal01 } from "@untitledui/icons";
+import { Building07, Check, ChevronSelectorVertical, LogOut01, RefreshCw01, ShoppingBag01, SwitchHorizontal01 } from "@untitledui/icons";
 import { Button as AriaButton, Dialog as AriaDialog, DialogTrigger as AriaDialogTrigger, Popover as AriaPopover } from "react-aria-components";
 import type { Scope } from "@/hooks/use-session";
 import { initials } from "@/lib/format";
@@ -22,66 +22,142 @@ const roleLabel = (scope: Scope) => {
 const popoverClass =
     "w-(--trigger-width) min-w-64 rounded-xl bg-primary p-1.5 shadow-lg ring-1 ring-secondary outline-hidden entering:animate-in entering:fade-in entering:zoom-in-95 exiting:animate-out exiting:fade-out";
 
-export const BusinessUnitSwitcher = ({ scope }: { scope: Scope }) => {
+export const LocationIcon = ({ type, className }: { type: "store" | "warehouse"; className?: string }) =>
+    type === "store" ? <ShoppingBag01 className={className} aria-hidden="true" /> : <Building07 className={className} aria-hidden="true" />;
+
+/**
+ * Sidebar Location switcher: "All locations", a whole business unit, or one store/warehouse.
+ * People assigned to a single location are locked to it.
+ */
+export const LocationSwitcher = ({ scope }: { scope: Scope }) => {
     const businessUnits = useAppStore((s) => s.businessUnits);
-    const activeId = useAppStore((s) => s.session.businessUnitId);
-    const setBusinessUnit = useAppStore((s) => s.setBusinessUnit);
+    const locations = useAppStore((s) => s.locations);
+    const setContext = useAppStore((s) => s.setContext);
     const company = useAppStore((s) => s.companies.find((c) => c.id === scope.companyId));
-    const options = businessUnits.filter((b) => scope.businessUnitIds.includes(b.id));
-    const active = options.find((b) => b.id === activeId) ?? null;
-    const showAll = options.length > 1;
+
+    const myLocations = locations.filter((l) => scope.locationIds.includes(l.id));
+    const groups = businessUnits
+        .filter((b) => scope.businessUnitIds.includes(b.id))
+        .map((b) => ({ unit: b, locations: myLocations.filter((l) => l.businessUnitId === b.id).sort((a, c) => a.type.localeCompare(c.type) * -1 || a.name.localeCompare(c.name)) }))
+        .filter((g) => g.locations.length);
+    const locked = myLocations.length <= 1;
+
+    const activeBu = scope.context.startsWith("bu:") ? businessUnits.find((b) => `bu:${b.id}` === scope.context) : undefined;
+    const active = scope.activeLocation;
+    const activeUnit = active ? businessUnits.find((b) => b.id === active.businessUnitId) : activeBu;
+    const title = active ? active.name : activeBu ? `All ${activeBu.name}` : scope.isExecutive ? "All locations" : "All my locations";
+    const subtitle = active ? `${active.type === "store" ? "Store" : "Warehouse"} · ${activeUnit?.name}` : activeBu ? "Business unit overview" : (company?.name ?? "");
+
+    const trigger = (
+        <>
+            {active ? (
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-white">
+                    <LocationIcon type={active.type} className="size-5" />
+                </span>
+            ) : (
+                <BusinessUnitAvatar unit={activeBu ?? null} />
+            )}
+            <span className="min-w-0 flex-1">
+                <span className="block truncate text-xs text-gray-400">{subtitle}</span>
+                <span className="block truncate text-md font-semibold text-white">{title}</span>
+            </span>
+        </>
+    );
+
+    if (locked) {
+        return <div className="flex w-full items-center gap-3 rounded-xl bg-white/5 px-3 py-2.5 ring-1 ring-white/15">{trigger}</div>;
+    }
 
     return (
         <AriaDialogTrigger>
             <AriaButton className="flex w-full cursor-pointer items-center gap-3 rounded-xl bg-white/5 px-3 py-2.5 text-left ring-1 ring-white/15 outline-hidden transition duration-100 ease-linear hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40">
-                <BusinessUnitAvatar unit={active ?? (showAll ? null : options[0])} />
-                <span className="min-w-0 flex-1">
-                    <span className="block text-xs text-gray-400">Business Unit</span>
-                    <span className="block truncate text-md font-semibold text-white">{active?.name ?? (showAll ? "All business units" : options[0]?.name)}</span>
-                </span>
+                {trigger}
                 <ChevronSelectorVertical className="size-4 shrink-0 text-gray-400" />
             </AriaButton>
-            <AriaPopover placement="bottom start" offset={6} className={popoverClass}>
-                <AriaDialog className="outline-hidden" aria-label="Choose business unit">
-                    {({ close }) => (
-                        <div className="flex flex-col">
-                            <p className="px-2.5 pt-1.5 pb-1 text-xs font-semibold text-quaternary">{company?.name}</p>
-                            {showAll && (
-                                <SwitcherOption
-                                    selected={activeId === "all"}
-                                    onPress={() => {
-                                        setBusinessUnit("all");
-                                        close();
-                                    }}
-                                    label="All business units"
-                                    unit={null}
+            <AriaPopover placement="bottom start" offset={6} className={cx(popoverClass, "max-h-[70vh] overflow-y-auto")}>
+                <AriaDialog className="outline-hidden" aria-label="Choose location">
+                    {({ close }) => {
+                        const pick = (context: string) => {
+                            setContext(context);
+                            close();
+                        };
+                        return (
+                            <div className="flex flex-col">
+                                <SwitcherRow
+                                    selected={scope.context === "all"}
+                                    onPress={() => pick("all")}
+                                    label={scope.isExecutive ? "All locations" : "All my locations"}
+                                    hint={scope.isExecutive ? `${company?.name} overview` : undefined}
+                                    icon={<BusinessUnitAvatar unit={null} size="sm" />}
                                 />
-                            )}
-                            {options.map((b) => (
-                                <SwitcherOption
-                                    key={b.id}
-                                    selected={activeId === b.id || !showAll}
-                                    onPress={() => {
-                                        setBusinessUnit(b.id);
-                                        close();
-                                    }}
-                                    label={b.name}
-                                    unit={b}
-                                />
-                            ))}
-                        </div>
-                    )}
+                                {groups.map((g) => (
+                                    <div key={g.unit.id} className="mt-1 border-t border-secondary pt-1">
+                                        {groups.length > 1 || g.locations.length > 1 ? (
+                                            <SwitcherRow
+                                                selected={scope.context === `bu:${g.unit.id}`}
+                                                onPress={() => pick(`bu:${g.unit.id}`)}
+                                                label={g.unit.name}
+                                                hint="All locations in this business unit"
+                                                icon={<BusinessUnitAvatar unit={g.unit} size="sm" />}
+                                                strong
+                                            />
+                                        ) : null}
+                                        {g.locations.map((l) => (
+                                            <SwitcherRow
+                                                key={l.id}
+                                                selected={scope.context === `loc:${l.id}`}
+                                                onPress={() => pick(`loc:${l.id}`)}
+                                                label={l.name}
+                                                hint={l.type === "store" ? "Store" : "Warehouse"}
+                                                icon={
+                                                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-secondary text-fg-tertiary">
+                                                        <LocationIcon type={l.type} className="size-3.5" />
+                                                    </span>
+                                                }
+                                                indent
+                                            />
+                                        ))}
+                                    </div>
+                                ))}
+                            </div>
+                        );
+                    }}
                 </AriaDialog>
             </AriaPopover>
         </AriaDialogTrigger>
     );
 };
 
-const SwitcherOption = ({ selected, onPress, label, unit }: { selected: boolean; onPress: () => void; label: string; unit: Parameters<typeof BusinessUnitAvatar>[0]["unit"] }) => (
-    <AriaButton onPress={onPress} className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-secondary outline-hidden hover:bg-primary_hover focus-visible:bg-primary_hover">
-        <BusinessUnitAvatar unit={unit} size="sm" />
-        <span className="flex-1">{label}</span>
-        {selected && <Check className="size-4 text-fg-brand-primary" />}
+const SwitcherRow = ({
+    selected,
+    onPress,
+    label,
+    hint,
+    icon,
+    indent,
+    strong,
+}: {
+    selected: boolean;
+    onPress: () => void;
+    label: string;
+    hint?: string;
+    icon: ReactNode;
+    indent?: boolean;
+    strong?: boolean;
+}) => (
+    <AriaButton
+        onPress={onPress}
+        className={cx(
+            "flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left outline-hidden hover:bg-primary_hover focus-visible:bg-primary_hover",
+            indent && "pl-6",
+        )}
+    >
+        {icon}
+        <span className="min-w-0 flex-1">
+            <span className={cx("block truncate text-sm text-secondary", strong ? "font-semibold" : "font-medium")}>{label}</span>
+            {hint && <span className="block truncate text-xs text-tertiary">{hint}</span>}
+        </span>
+        {selected && <Check className="size-4 shrink-0 text-fg-brand-primary" />}
     </AriaButton>
 );
 
@@ -104,7 +180,7 @@ export const Sidebar = ({ scope, badges, onNavigate }: { scope: Scope; badges: R
             </div>
 
             <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-4 py-5 scrollbar-hide">
-                <BusinessUnitSwitcher scope={scope} />
+                <LocationSwitcher scope={scope} />
                 {sections.map((section, i) => (
                     <div key={section.title ?? i} className="flex flex-col gap-0.5">
                         {section.title && <p className="px-3 pb-1 text-xs font-semibold tracking-wide text-gray-500 uppercase">{section.title}</p>}

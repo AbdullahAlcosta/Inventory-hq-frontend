@@ -38,7 +38,7 @@ function StoreRequestDetailPage() {
     const [values, setValues] = useState<Record<string, number>>({});
     const [dialog, setDialog] = useState<null | "pick" | "ship" | "confirm">(null);
 
-    if (!r || !(scope.locationIds.includes(r.storeId) || scope.locationIds.includes(r.warehouseId))) {
+    if (!r || !(scope.locationIds.includes(r.storeId) || scope.locationIds.includes(r.sourceId))) {
         return (
             <div>
                 <PageHeader backHref="/replenishment/requests" backLabel="Store Requests" title="Request not found" />
@@ -73,7 +73,7 @@ function StoreRequestDetailPage() {
                 backLabel="Store Requests"
                 eyebrow={
                     <>
-                        <LocationName id={r.warehouseId} /> → <LocationName id={r.storeId} />
+                        <LocationName id={r.sourceId} /> → <LocationName id={r.storeId} />
                     </>
                 }
                 title={
@@ -183,7 +183,7 @@ function StoreRequestDetailPage() {
                         <LocationName id={r.storeId} />
                     </Field>
                     <Field label="Warehouse">
-                        <LocationName id={r.warehouseId} />
+                        <LocationName id={r.sourceId} />
                     </Field>
                     <Field label="Requested by">
                         <EmployeeName id={r.createdBy} />

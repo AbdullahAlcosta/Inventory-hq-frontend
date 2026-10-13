@@ -233,7 +233,7 @@ export const buildReport = (data: AppData, businessUnitIds: string[], locationId
     ).length;
     const posReceived = data.purchaseOrders.filter((po) => locIds.has(po.warehouseId) && inRange(po.receivedAt, period.start, period.end)).length;
     const requestsShipped = data.storeRequests.filter(
-        (r) => (locIds.has(r.storeId) || locIds.has(r.warehouseId)) && r.history.some((h) => h.status === "shipped" && inRange(h.at, period.start, period.end)),
+        (r) => (locIds.has(r.storeId) || locIds.has(r.sourceId)) && r.history.some((h) => h.status === "shipped" && inRange(h.at, period.start, period.end)),
     ).length;
     let countVariances = 0;
     let countsWithVariance = 0;

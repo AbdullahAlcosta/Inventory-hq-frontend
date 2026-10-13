@@ -25,12 +25,19 @@ export const useCurrentUser = (): Employee | null => {
 export interface Scope {
     user: Employee;
     companyId: string;
-    /** Everything this user may access. */
+    /** Everything this user may access (role + assignment). */
     businessUnitIds: string[];
     locationIds: string[];
-    /** Narrowed by the sidebar Business Unit switcher. Use these to filter lists. */
+    /**
+     * Narrowed by the sidebar Location switcher. Use these to filter lists.
+     * "All locations" → everything in scope; a business unit → its locations; a location → just that one.
+     */
     activeBusinessUnitIds: string[];
     activeLocationIds: string[];
+    /** The single store/warehouse picked in the switcher, or null on an overview ("All…"). */
+    activeLocation: Location | null;
+    /** Raw switcher value: "all" | "bu:<id>" | "loc:<id>". */
+    context: string;
     locations: Location[];
     stores: Location[];
     warehouses: Location[];
@@ -39,43 +46,86 @@ export interface Scope {
     isAssociate: boolean;
     isStoreLevel: boolean;
     isWarehouseLevel: boolean;
-    /** Managers and executives can decide approvals and manage vendors/POs. */
+    /** Managers and executives: decide approvals (for their locations), see the activity log. */
     canManage: boolean;
+    /** Create/edit products and bulk import: executives and warehouse managers. */
+    canManageCatalog: boolean;
+    /** Vendors, purchase orders, reorder settings: executives and warehouse managers. */
+    canManagePurchasing: boolean;
+    /** Purchase orders & receiving screens: executives and warehouse staff. */
+    canSeePurchasing: boolean;
+    /** Sales channels (connections, allocation, reconciliation): executives only. */
+    canManageChannels: boolean;
 }
+
+const parseContext = (context: string) => {
+    if (context.startsWith("bu:")) return { kind: "bu" as const, id: context.slice(3) };
+    if (context.startsWith("loc:")) return { kind: "loc" as const, id: context.slice(4) };
+    return { kind: "all" as const, id: "" };
+};
 
 /**
  * What the signed-in user can see, from their role + assignment (PRD §4),
- * narrowed by the Business Unit picked in the sidebar.
+ * narrowed by the location picked in the sidebar.
  */
 export const useScope = (): Scope | null => {
     const user = useCurrentUser();
     const businessUnits = useAppStore((s) => s.businessUnits);
     const locations = useAppStore((s) => s.locations);
-    const activeBu = useAppStore((s) => s.session.businessUnitId);
+    const context = useAppStore((s) => s.session.context ?? "all");
 
     return useMemo(() => {
         if (!user) return null;
         const scope = scopeFor({ businessUnits, locations }, user);
-        const activeBusinessUnitIds = activeBu !== "all" && scope.businessUnitIds.includes(activeBu) ? [activeBu] : scope.businessUnitIds;
-        const activeLocations = locations.filter((l) => scope.locationIds.includes(l.id) && activeBusinessUnitIds.includes(l.businessUnitId));
+        const scoped = locations.filter((l) => scope.locationIds.includes(l.id));
+        const parsed = parseContext(context);
+
+        let activeLocations = scoped;
+        let activeLocation: Location | null = null;
+        let activeContext = "all";
+        if (parsed.kind === "loc" && scoped.some((l) => l.id === parsed.id)) {
+            activeLocation = scoped.find((l) => l.id === parsed.id)!;
+            activeLocations = [activeLocation];
+            activeContext = context;
+        } else if (parsed.kind === "bu" && scope.businessUnitIds.includes(parsed.id)) {
+            activeLocations = scoped.filter((l) => l.businessUnitId === parsed.id);
+            activeContext = context;
+        } else if (scoped.length === 1 && user.role !== "executive") {
+            activeLocation = scoped[0];
+            activeLocations = scoped;
+            activeContext = `loc:${scoped[0].id}`;
+        }
+        const activeBusinessUnitIds =
+            parsed.kind === "all" || activeContext === "all"
+                ? scope.businessUnitIds
+                : Array.from(new Set(activeLocations.map((l) => l.businessUnitId))).filter((id) => scope.businessUnitIds.includes(id));
+
+        const isExecutive = user.role === "executive";
+        const isWarehouseManager = user.role === "manager" && user.level === "warehouse";
         return {
             user,
             companyId: user.companyId,
             businessUnitIds: scope.businessUnitIds,
             locationIds: scope.locationIds,
-            activeBusinessUnitIds,
+            activeBusinessUnitIds: activeBusinessUnitIds.length ? activeBusinessUnitIds : scope.businessUnitIds,
             activeLocationIds: activeLocations.map((l) => l.id),
+            activeLocation,
+            context: activeContext,
             locations: activeLocations,
             stores: activeLocations.filter((l) => l.type === "store"),
             warehouses: activeLocations.filter((l) => l.type === "warehouse"),
-            isExecutive: user.role === "executive",
+            isExecutive,
             isManager: user.role === "manager",
             isAssociate: user.role === "associate",
             isStoreLevel: user.level === "store",
             isWarehouseLevel: user.level === "warehouse",
             canManage: user.role !== "associate",
+            canManageCatalog: isExecutive || isWarehouseManager,
+            canManagePurchasing: isExecutive || isWarehouseManager,
+            canSeePurchasing: isExecutive || user.level === "warehouse",
+            canManageChannels: isExecutive,
         };
-    }, [user, businessUnits, locations, activeBu]);
+    }, [user, businessUnits, locations, context]);
 };
 
 /** Same as useScope but asserts a signed-in user (pages inside the app shell). */

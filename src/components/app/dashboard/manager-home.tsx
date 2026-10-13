@@ -57,7 +57,7 @@ export const ManagerHome = ({ scope }: { scope: Scope }) => {
             if (productBu.get(v.productId) === locBu.get(s.locationId) && s.available <= v.reorderPoint) low++;
         });
         const openPos = purchaseOrders.filter((p) => locIds.has(p.warehouseId) && !["complete", "resolved"].includes(p.status));
-        const openRequests = storeRequests.filter((r) => (locIds.has(r.storeId) || locIds.has(r.warehouseId)) && r.status !== "confirmed");
+        const openRequests = storeRequests.filter((r) => (locIds.has(r.storeId) || locIds.has(r.sourceId)) && r.status !== "confirmed");
         const connIds = new Set(connections.map((c) => c.id));
         const openMismatches = mismatches.filter((m) => connIds.has(m.connectionId) && m.status === "open");
         return { pending, low, value, openPos, openRequests, openMismatches };

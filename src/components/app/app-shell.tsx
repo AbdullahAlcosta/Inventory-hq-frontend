@@ -10,7 +10,8 @@ import { canDecideApproval } from "@/lib/selectors";
 import { initials } from "@/lib/format";
 import { useAppStore } from "@/store/app-store";
 import { cx } from "@/utils/cx";
-import { isPathAllowed } from "./nav-config";
+import { isPathAllowed, requiredLocation } from "./nav-config";
+import { RequireLocation } from "./require-location";
 import { Sidebar } from "./sidebar";
 import { Toaster } from "./toast";
 
@@ -34,11 +35,11 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
         if (!scope) return {} as Record<string, number>;
         return {
             approvals: approvals.filter((a) => a.status === "pending" && canDecideApproval(scope.user, a, scope) && scope.activeBusinessUnitIds.includes(a.businessUnitId)).length,
-            // Requests waiting on this person's side of the hand-off.
-            requests: storeRequests.filter((r) =>
-                scope.isWarehouseLevel
-                    ? scope.activeLocationIds.includes(r.warehouseId) && ["requested", "picked", "packed"].includes(r.status)
-                    : scope.activeLocationIds.includes(r.storeId) && r.status === "shipped",
+            // Requests waiting on this person's side of the hand-off: fulfilling (as the source) or confirming (as the store).
+            requests: storeRequests.filter(
+                (r) =>
+                    (scope.activeLocationIds.includes(r.sourceId) && ["requested", "picked", "packed"].includes(r.status)) ||
+                    (scope.activeLocationIds.includes(r.storeId) && r.status === "shipped"),
             ).length,
             receiving: purchaseOrders.filter((p) => scope.activeLocationIds.includes(p.warehouseId) && (p.status === "sent" || p.status === "receiving")).length,
         };
@@ -53,6 +54,7 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
     }
 
     const allowed = isPathAllowed(pathname, scope);
+    const needsLocation = requiredLocation(pathname);
 
     return (
         <div className="flex min-h-dvh bg-secondary">
@@ -102,7 +104,13 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
 
                 <main className={cx("flex-1 px-4 py-6 md:px-8 md:py-8")}>
                     {allowed ? (
-                        children
+                        needsLocation ? (
+                            <RequireLocation scope={scope} requirement={needsLocation}>
+                                {children}
+                            </RequireLocation>
+                        ) : (
+                            children
+                        )
                     ) : (
                         <div className="mx-auto mt-20 max-w-md text-center">
                             <h1 className="text-display-xs font-semibold text-primary">No access</h1>

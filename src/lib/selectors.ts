@@ -200,9 +200,18 @@ export const scopeFor = (data: Pick<DataSnapshot, "businessUnits" | "locations">
     return { businessUnitIds, locationIds };
 };
 
+/**
+ * Who decides what:
+ * - Executives: everything in their company.
+ * - Managers: items at their own locations. Channel items (mismatches, sync failures) are executive-only,
+ *   and catalog import duplicates go to warehouse managers (who manage the catalog with executives).
+ * - Associates: nothing.
+ */
 export const canDecideApproval = (user: Employee, approval: Approval, scope: { businessUnitIds: string[]; locationIds: string[] }) => {
     if (user.role === "executive") return scope.businessUnitIds.includes(approval.businessUnitId);
     if (user.role !== "manager") return false;
+    if (approval.type === "mismatch" || approval.type === "sync_failure") return false;
+    if (approval.type === "import_duplicate") return user.level === "warehouse" && scope.businessUnitIds.includes(approval.businessUnitId);
     if (approval.locationId) return scope.locationIds.includes(approval.locationId);
     return scope.businessUnitIds.includes(approval.businessUnitId);
 };

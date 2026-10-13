@@ -35,7 +35,7 @@ const printCss = `
 export default function ExecutiveReportPage() {
     const scope = useRequiredScope();
     const store = useAppStore();
-    const { companies, businessUnits, salesHistory, session } = store;
+    const { companies, businessUnits, salesHistory } = store;
     const company = companies.find((c) => c.id === scope.companyId);
 
     const options = useMemo(() => monthOptions(salesHistory.map((r) => r.date)), [salesHistory]);
@@ -52,7 +52,7 @@ export default function ExecutiveReportPage() {
         return <Empty title="Executives only" description="The monthly report is available to executives." />;
     }
 
-    const activeBu = session.businessUnitId !== "all" ? businessUnits.find((b) => b.id === session.businessUnitId && scope.businessUnitIds.includes(b.id)) : undefined;
+    const activeBu = scope.activeBusinessUnitIds.length === 1 && scope.businessUnitIds.length > 1 ? businessUnits.find((b) => b.id === scope.activeBusinessUnitIds[0]) : undefined;
     const scopeLabel = activeBu ? activeBu.name : `${company?.name ?? "Company"} · all business units`;
     const stores = report.byLocation.filter((r) => r.location.type === "store");
     const warehouses = report.byLocation.filter((r) => r.location.type === "warehouse");

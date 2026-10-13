@@ -24,18 +24,17 @@ export default function LocationsSetupPage() {
     const locations = useAppStore((s) => s.locations);
     const employees = useAppStore((s) => s.employees);
     const connections = useAppStore((s) => s.connections);
-    const activeBuId = useAppStore((s) => s.session.businessUnitId);
 
     const [buModal, setBuModal] = useState<{ open: boolean; unit: BusinessUnit | null }>({ open: false, unit: null });
     const [locModal, setLocModal] = useState<{ open: boolean; location: Location | null; buId?: string }>({ open: false, location: null });
 
     const company = companies.find((c) => c.id === scope.companyId);
     const companyBus = businessUnits.filter((b) => b.companyId === scope.companyId);
-    const visibleBus = companyBus.filter((b) => scope.activeBusinessUnitIds.includes(b.id));
+    // Company structure is a company-level page: always show every business unit.
+    const visibleBus = companyBus;
     const companyLocations = locations.filter((l) => companyBus.some((b) => b.id === l.businessUnitId));
     const companyEmployees = employees.filter((e) => e.companyId === scope.companyId);
     const canEdit = scope.isExecutive;
-    const filtered = activeBuId !== "all" && visibleBus.length < companyBus.length;
 
     return (
         <div className="flex flex-col gap-6">
@@ -83,7 +82,6 @@ export default function LocationsSetupPage() {
                 </div>
             </section>
 
-            {filtered && <p className="-mt-2 text-sm text-tertiary">Showing the business unit picked in the sidebar. Switch to “All business units” to see the whole company.</p>}
 
             {visibleBus.length === 0 ? (
                 <Card>
@@ -203,7 +201,7 @@ export default function LocationsSetupPage() {
                 onOpenChange={(open) => setLocModal((m) => ({ ...m, open }))}
                 businessUnits={companyBus}
                 location={locModal.location}
-                defaultBusinessUnitId={locModal.buId ?? (activeBuId !== "all" ? activeBuId : undefined)}
+                defaultBusinessUnitId={locModal.buId}
             />
         </div>
     );

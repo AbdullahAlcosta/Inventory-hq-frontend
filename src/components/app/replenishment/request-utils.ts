@@ -15,7 +15,7 @@ export const requestSteps = [
 export const requestStatusLabel = (s: string) => requestSteps.find((x) => x.id === s)?.label ?? s;
 
 /** Warehouse side: pick, pack, ship. */
-export const canWorkWarehouse = (scope: Scope, r: StoreRequest) => scope.locationIds.includes(r.warehouseId) && (scope.isWarehouseLevel || scope.canManage);
+export const canWorkWarehouse = (scope: Scope, r: StoreRequest) => scope.locationIds.includes(r.sourceId) && (scope.isWarehouseLevel || scope.canManage);
 
 /** Store side: confirm receipt. */
 export const canWorkStore = (scope: Scope, r: StoreRequest) => scope.locationIds.includes(r.storeId) && (scope.isStoreLevel || scope.canManage);

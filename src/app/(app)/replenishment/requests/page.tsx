@@ -29,8 +29,8 @@ export default function StoreRequestsPage() {
                 scope.isStoreLevel
                     ? scope.activeLocationIds.includes(r.storeId)
                     : scope.isWarehouseLevel
-                      ? scope.activeLocationIds.includes(r.warehouseId)
-                      : scope.activeLocationIds.includes(r.storeId) || scope.activeLocationIds.includes(r.warehouseId),
+                      ? scope.activeLocationIds.includes(r.sourceId)
+                      : scope.activeLocationIds.includes(r.storeId) || scope.activeLocationIds.includes(r.sourceId),
             ),
         [storeRequests, scope],
     );
@@ -112,7 +112,7 @@ export default function StoreRequestsPage() {
                                         <LocationName id={row.r.storeId} />
                                     </Table.Cell>
                                     <Table.Cell className="whitespace-nowrap">
-                                        <LocationName id={row.r.warehouseId} />
+                                        <LocationName id={row.r.sourceId} />
                                     </Table.Cell>
                                     <Table.Cell className="whitespace-nowrap tabular-nums">
                                         {row.r.lines.length} / {formatNumber(row.units)}

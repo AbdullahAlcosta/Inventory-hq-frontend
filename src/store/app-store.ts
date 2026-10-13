@@ -73,8 +73,11 @@ export interface AppData {
 
 export interface Session {
     userId: string | null;
-    /** "all" or a business unit id — the sidebar switcher. */
-    businessUnitId: string;
+    /**
+     * What the sidebar Location switcher points at:
+     * "all" (whole company / all my locations), "bu:<businessUnitId>" or "loc:<locationId>".
+     */
+    context: string;
 }
 
 export type ScanResult =
@@ -92,7 +95,7 @@ interface Actions {
     /* session */
     login: (userId: string) => void;
     logout: () => void;
-    setBusinessUnit: (id: string) => void;
+    setContext: (context: string) => void;
     resetDemo: () => void;
 
     /* setup */
@@ -138,7 +141,8 @@ interface Actions {
     finishReceiving: (poId: string) => PurchaseOrder["status"];
 
     /* replenishment */
-    createStoreRequest: (input: { storeId: string; lines: { variantId: string; requestedQty: number }[]; note: string }) => string;
+    /** sourceId defaults to the store's business-unit warehouse; it may also be another store in the same BU. */
+    createStoreRequest: (input: { storeId: string; sourceId?: string; lines: { variantId: string; requestedQty: number }[]; note: string }) => string;
     pickRequest: (id: string, shipped: Record<string, number>) => void;
     packRequest: (id: string) => void;
     shipRequest: (id: string) => void;
@@ -272,23 +276,25 @@ export const useAppStore = create<AppState>()(
     persist(
         immer((set, get) => ({
             ...initialData(),
-            session: { userId: null, businessUnitId: "all" },
+            session: { userId: null, context: "all" },
 
             /* ---------------- session ---------------- */
             login: (userId) =>
                 set((s) => {
                     s.session.userId = userId;
-                    s.session.businessUnitId = "all";
+                    // People assigned to a single location start (and stay) there; others start on the overview.
+                    const user = s.employees.find((e) => e.id === userId);
+                    s.session.context = user && user.role !== "executive" && user.locationIds.length === 1 ? `loc:${user.locationIds[0]}` : "all";
                 }),
             logout: () =>
                 set((s) => {
                     s.session.userId = null;
                 }),
-            setBusinessUnit: (id) =>
+            setContext: (context) =>
                 set((s) => {
-                    s.session.businessUnitId = id;
+                    s.session.context = context;
                 }),
-            resetDemo: () => set((s) => ({ ...initialData(), session: { ...s.session, businessUnitId: "all" } })),
+            resetDemo: () => set((s) => ({ ...initialData(), session: { ...s.session } })),
 
             /* ---------------- setup ---------------- */
             addCompany: ({ name, executiveName, executiveEmail }) => {
@@ -841,18 +847,20 @@ export const useAppStore = create<AppState>()(
             },
 
             /* ---------------- replenishment ---------------- */
-            createStoreRequest: ({ storeId, lines, note }) => {
+            createStoreRequest: ({ storeId, sourceId, lines, note }) => {
                 const id = uid("sr");
                 set((s) => {
                     const store = s.locations.find((l) => l.id === storeId)!;
-                    const warehouse = s.locations.find((l) => l.businessUnitId === store.businessUnitId && l.type === "warehouse");
+                    const source =
+                        s.locations.find((l) => l.id === sourceId && l.businessUnitId === store.businessUnitId && l.id !== storeId) ??
+                        s.locations.find((l) => l.businessUnitId === store.businessUnitId && l.type === "warehouse");
                     const number = nextNumber("SR", s.storeRequests.map((r) => r.number));
                     const by = s.session.userId ?? "system";
                     s.storeRequests.unshift({
                         id,
                         number,
                         storeId,
-                        warehouseId: warehouse?.id ?? "",
+                        sourceId: source?.id ?? "",
                         status: "requested",
                         lines: lines.map((l) => ({ ...l, shippedQty: 0, receivedQty: 0 })),
                         note,
@@ -860,7 +868,7 @@ export const useAppStore = create<AppState>()(
                         createdAt: now(),
                         history: [{ status: "requested", by, at: now() }],
                     });
-                    log(s, "store_request", `${number} requested by ${store.name} (${lines.length} line${lines.length === 1 ? "" : "s"})`, { locationId: storeId });
+                    log(s, "store_request", `${number} requested by ${store.name} from ${source?.name ?? "—"} (${lines.length} line${lines.length === 1 ? "" : "s"})`, { locationId: storeId });
                 });
                 return id;
             },
@@ -871,7 +879,7 @@ export const useAppStore = create<AppState>()(
                     r.lines.forEach((l) => (l.shippedQty = Math.max(0, shipped[l.variantId] ?? l.requestedQty)));
                     r.status = "picked";
                     r.history.push({ status: "picked", by: s.session.userId ?? "system", at: now() });
-                    log(s, "store_request", `${r.number} picked`, { locationId: r.warehouseId });
+                    log(s, "store_request", `${r.number} picked`, { locationId: r.sourceId });
                 }),
             packRequest: (id) =>
                 set((s) => {
@@ -879,7 +887,7 @@ export const useAppStore = create<AppState>()(
                     if (!r || r.status !== "picked") return;
                     r.status = "packed";
                     r.history.push({ status: "packed", by: s.session.userId ?? "system", at: now() });
-                    log(s, "store_request", `${r.number} packed`, { locationId: r.warehouseId });
+                    log(s, "store_request", `${r.number} packed`, { locationId: r.sourceId });
                 }),
             shipRequest: (id) =>
                 set((s) => {
@@ -887,14 +895,14 @@ export const useAppStore = create<AppState>()(
                     if (!r || r.status !== "packed") return;
                     let units = 0;
                     r.lines.forEach((l) => {
-                        applyStockDelta(s, l.variantId, r.warehouseId, -l.shippedQty);
+                        applyStockDelta(s, l.variantId, r.sourceId, -l.shippedQty);
                         applyStockDelta(s, l.variantId, r.storeId, l.shippedQty, "inTransit");
                         units += l.shippedQty;
                     });
                     r.status = "shipped";
                     r.history.push({ status: "shipped", by: s.session.userId ?? "system", at: now() });
                     const store = s.locations.find((l) => l.id === r.storeId)!;
-                    log(s, "store_request", `${r.number} shipped — ${units} units now In Transit to ${store.name}`, { locationId: r.warehouseId, quantity: -units });
+                    log(s, "store_request", `${r.number} shipped — ${units} units now In Transit to ${store.name}`, { locationId: r.sourceId, quantity: -units });
                 }),
             confirmRequest: (id, received) =>
                 set((s) => {
@@ -1186,7 +1194,9 @@ export const useAppStore = create<AppState>()(
         })),
         {
             name: "inventory-hq-demo",
-            version: 1,
+            // Bump when the data shape changes; older saved demo data is replaced with fresh seed data.
+            version: 2,
+            migrate: () => ({ ...initialData(), session: { userId: null, context: "all" } }) as unknown as AppState,
             storage: createJSONStorage(() => localStorage),
         },
     ),

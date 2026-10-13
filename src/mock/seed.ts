@@ -487,31 +487,37 @@ export const purchaseOrders: PurchaseOrder[] = [
 
 export const storeRequests: StoreRequest[] = [
     {
-        id: "sr_1", number: "SR-2207", storeId: "st_alcosta", warehouseId: "wh_smoke", status: "requested", note: "Running low before the weekend.",
+        id: "sr_1", number: "SR-2207", storeId: "st_alcosta", sourceId: "wh_smoke", status: "requested", note: "Running low before the weekend.",
         lines: [{ variantId: "p_geek_v1", requestedQty: 20, shippedQty: 0, receivedQty: 0 }, { variantId: "p_raw_v2", requestedQty: 24, shippedQty: 0, receivedQty: 0 }],
         createdBy: "e_assoc_store", createdAt: daysAgo(0, 8), history: [{ status: "requested", by: "e_assoc_store", at: daysAgo(0, 8) }],
     },
     {
-        id: "sr_2", number: "SR-2206", storeId: "st_dublin", warehouseId: "wh_smoke", status: "picked", note: "",
+        id: "sr_2", number: "SR-2206", storeId: "st_dublin", sourceId: "wh_smoke", status: "picked", note: "",
         lines: [{ variantId: "p_backwoods_v1", requestedQty: 16, shippedQty: 16, receivedQty: 0 }, { variantId: "p_clipper_v1", requestedQty: 48, shippedQty: 48, receivedQty: 0 }],
         createdBy: "e_mgr_store", createdAt: daysAgo(1), history: [{ status: "requested", by: "e_mgr_store", at: daysAgo(1) }, { status: "picked", by: "e_assoc_wh", at: daysAgo(0, 9) }],
     },
     {
-        id: "sr_3", number: "SR-2205", storeId: "st_alcosta", warehouseId: "wh_smoke", status: "shipped", note: "",
+        id: "sr_3", number: "SR-2205", storeId: "st_alcosta", sourceId: "wh_smoke", status: "shipped", note: "",
         lines: [{ variantId: "p_elf_v1", requestedQty: 10, shippedQty: 10, receivedQty: 0 }, { variantId: "p_zigzag_v1", requestedQty: 12, shippedQty: 12, receivedQty: 0 }],
         createdBy: "e_assoc_store", createdAt: daysAgo(2),
         history: [{ status: "requested", by: "e_assoc_store", at: daysAgo(2) }, { status: "picked", by: "e_assoc_wh", at: daysAgo(1, 9) }, { status: "packed", by: "e_assoc_wh", at: daysAgo(1, 11) }, { status: "shipped", by: "e_assoc_wh", at: daysAgo(1, 14) }],
     },
     {
-        id: "sr_4", number: "SR-2201", storeId: "st_sanramon", warehouseId: "wh_smoke", status: "confirmed", note: "",
+        id: "sr_4", number: "SR-2201", storeId: "st_sanramon", sourceId: "wh_smoke", status: "confirmed", note: "",
         lines: [{ variantId: "p_geek_v3", requestedQty: 10, shippedQty: 10, receivedQty: 10 }],
         createdBy: "e_mgr_store", createdAt: daysAgo(6),
         history: [{ status: "requested", by: "e_mgr_store", at: daysAgo(6) }, { status: "picked", by: "e_assoc_wh", at: daysAgo(5) }, { status: "packed", by: "e_assoc_wh", at: daysAgo(5, 12) }, { status: "shipped", by: "e_assoc_wh", at: daysAgo(5, 15) }, { status: "confirmed", by: "e_mgr_store", at: daysAgo(4) }],
     },
     {
-        id: "sr_5", number: "SR-2208", storeId: "st_apparel", warehouseId: "wh_apparel", status: "packed", note: "",
+        id: "sr_5", number: "SR-2208", storeId: "st_apparel", sourceId: "wh_apparel", status: "packed", note: "",
         lines: [{ variantId: "p_hoodie_v2", requestedQty: 6, shippedQty: 6, receivedQty: 0 }],
         createdBy: "e_mgr_apparel", createdAt: daysAgo(1), history: [{ status: "requested", by: "e_mgr_apparel", at: daysAgo(1) }, { status: "picked", by: "e_mgr_apparel", at: daysAgo(0, 9) }, { status: "packed", by: "e_mgr_apparel", at: daysAgo(0, 10) }],
+    },
+    {
+        // Store-to-store transfer: San Ramon borrows from Dublin instead of waiting on the warehouse.
+        id: "sr_6", number: "SR-2209", storeId: "st_sanramon", sourceId: "st_dublin", status: "requested", note: "Customer waiting — Dublin has extra.",
+        lines: [{ variantId: "p_backwoods_v2", requestedQty: 4, shippedQty: 0, receivedQty: 0 }],
+        createdBy: "e_mgr_store", createdAt: daysAgo(0, 9), history: [{ status: "requested", by: "e_mgr_store", at: daysAgo(0, 9) }],
     },
 ];
 

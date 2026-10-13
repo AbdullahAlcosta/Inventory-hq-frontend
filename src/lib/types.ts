@@ -298,8 +298,10 @@ export interface StoreRequestLine {
 export interface StoreRequest {
     id: ID;
     number: string;
+    /** The requesting store. */
     storeId: ID;
-    warehouseId: ID;
+    /** Where the stock comes from: the business unit's warehouse or another store. */
+    sourceId: ID;
     status: StoreRequestStatus;
     lines: StoreRequestLine[];
     note: string;

@@ -58,7 +58,7 @@ const RequestList = ({ requests, empty, side }: { requests: StoreRequest[]; empt
                             <p className="truncate text-xs text-tertiary">
                                 {side === "store" ? (
                                     <>
-                                        From <LocationName id={r.warehouseId} />
+                                        From <LocationName id={r.sourceId} />
                                     </>
                                 ) : (
                                     <>
@@ -147,7 +147,7 @@ export const WarehouseAssociateHome = ({ scope }: { scope: Scope }) => {
         const ids = new Set(whIds);
         return {
             toReceive: purchaseOrders.filter((p) => ids.has(p.warehouseId) && (p.status === "sent" || p.status === "receiving")),
-            toWork: storeRequests.filter((r) => ids.has(r.warehouseId) && ["requested", "picked", "packed"].includes(r.status)).sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+            toWork: storeRequests.filter((r) => ids.has(r.sourceId) && ["requested", "picked", "packed"].includes(r.status)).sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [purchaseOrders, storeRequests, whIds.join()]);
