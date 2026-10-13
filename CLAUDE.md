@@ -1,3 +1,30 @@
+# Inventory HQ — frontend (static MVP)
+
+Back-office app for products, stock, purchasing, store replenishment, sales-channel sync and Approvals (see the PRD).
+**There is no backend yet.** All data comes from `src/mock/seed.ts` and lives in a client-side Zustand store
+(`src/store/app-store.ts`, persisted to localStorage). Every store action stands in for a future API call.
+
+## App conventions (read before adding screens)
+
+- Next.js App Router. Signed-in pages live in `src/app/(app)/<area>/...` and are client components (`"use client"`).
+  The `(app)` layout (`components/app/app-shell.tsx`) handles hydration, login redirect, sidebar, header and route access.
+- Domain types: `src/lib/types.ts`. Pure derivations: `src/lib/selectors.ts` (stock, channel allocation, duplicates, barcode lookup, scope).
+  Formatting: `src/lib/format.ts`.
+- Read data with `useAppStore((s) => s.xxx)` and call actions from the store. Don't mutate state elsewhere.
+- Scope: `useRequiredScope()` from `src/hooks/use-session.ts` gives the user, role flags and the locations/BUs they may see,
+  already narrowed by the sidebar Business Unit switcher (`activeBusinessUnitIds`, `activeLocationIds`, `stores`, `warehouses`).
+  Always filter lists by these. Managers/Executives (`scope.canManage`) decide approvals and manage vendors/POs.
+- Shared app components in `src/components/app/`: `PageHeader`, `Card`/`Field`, `StatCard`, `FilterPills`, `StatusBadge`,
+  `ModalDialog`/`ConfirmDialog` (supports type-to-confirm), `ScanInput` (scanner-first input + "Simulate scan"), `VariantPicker`,
+  `VariantCell`/`LocationName`/`EmployeeName`/`ProductSwatch`, `Empty`, and `toast` (`toast.success(...)`).
+- Use Untitled UI components from `src/components/base` and `src/components/application` (Button, Input, Select, Table/TableCard,
+  Tabs, SlideoutMenu, Badge, Checkbox, Toggle, TextArea, InputNumber...). Buttons use `onPress`, not `onClick`.
+- Look & feel follows SugrPay: dark sidebar, light gray page (`bg-secondary`), white rounded cards, black primary buttons,
+  black/white pill filters, dotted status badges, slideouts for review, typed confirmations for bulk actions.
+- File names are kebab-case.
+
+---
+
 ## Project Overview
 
 This is an **Untitled UI React** component library project built with:

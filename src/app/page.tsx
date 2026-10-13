@@ -1,3 +1,5 @@
-import { HomeScreen } from "./home-screen";
+import { redirect } from "next/navigation";
 
-export default HomeScreen;
+export default function Home() {
+    redirect("/dashboard");
+}
