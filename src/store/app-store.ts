@@ -15,6 +15,7 @@ import {
     channelAllocation,
     emptyStock,
     findDuplicates,
+    isAllocationEnabled,
     lookupCode,
     productOf,
     variantLabel,
@@ -29,6 +30,7 @@ import type {
     BusinessUnit,
     ChannelConnection,
     Company,
+    CompanySettings,
     Employee,
     ImportRow,
     Location,
@@ -99,6 +101,7 @@ interface Actions {
     logout: () => void;
     setContext: (context: string) => void;
     completeTour: (userId: string) => void;
+    updateCompanySettings: (companyId: string, patch: Partial<CompanySettings>) => void;
     resetDemo: () => void;
 
     /* setup */
@@ -266,6 +269,12 @@ const defaultVariant = (row: Partial<ImportRow> & { variant: string }, vendorId:
     dailySales: 0,
 });
 
+/** Stock + allocations to use for a connection; allocations are ignored when the company has them switched off. */
+const allocData = (s: Draft, connection: ChannelConnection) => ({
+    stockLevels: s.stockLevels,
+    allocations: isAllocationEnabled(s, connection.businessUnitId) ? s.allocations : [],
+});
+
 const applyStockDelta = (s: Draft, variantId: string, locationId: string, delta: number, state: StockState = "available") => {
     const row = stockRow(s, variantId, locationId);
     row[state] = Math.max(0, row[state] + delta);
@@ -297,6 +306,14 @@ export const useAppStore = create<AppState>()(
                 set((s) => {
                     s.session.context = context;
                 }),
+            updateCompanySettings: (companyId, patch) =>
+                set((s) => {
+                    const c = s.companies.find((x) => x.id === companyId);
+                    if (!c) return;
+                    c.settings = { channelAllocation: true, ...c.settings, ...patch };
+                    if (patch.channelAllocation !== undefined)
+                        log(s, "setup", `Channel allocation turned ${patch.channelAllocation ? "on" : "off"} for ${c.name}`);
+                }),
             completeTour: (userId) =>
                 set((s) => {
                     const done = s.session.toursCompleted ?? [];
@@ -308,7 +325,7 @@ export const useAppStore = create<AppState>()(
             addCompany: ({ name, executiveName, executiveEmail }) => {
                 const id = uid("co");
                 set((s) => {
-                    s.companies.push({ id, name, createdAt: now() });
+                    s.companies.push({ id, name, createdAt: now(), settings: { channelAllocation: false } });
                     s.employees.push({ id: uid("e"), companyId: id, name: executiveName, email: executiveEmail, role: "executive", level: "company", businessUnitIds: [], locationIds: [], status: "invited" });
                     log(s, "setup", `Company “${name}” created; ${executiveName} invited as Executive`);
                 });
@@ -579,7 +596,7 @@ export const useAppStore = create<AppState>()(
                         listing.status = "synced";
                         listing.message = undefined;
                         listing.externalId = listing.externalId ?? `${connection.channel.slice(0, 2).toUpperCase()}-${Math.floor(100000 + Math.random() * 899999)}`;
-                        listing.lastPushedQty = channelAllocation(s, variantId, connection).sellable;
+                        listing.lastPushedQty = channelAllocation(allocData(s, connection), variantId, connection).sellable;
                         listing.lastPushedAt = now();
                         result.pushed++;
                     });
@@ -619,7 +636,7 @@ export const useAppStore = create<AppState>()(
                         .forEach((l) => {
                             // Simulate the channel reporting a slightly different number now and then.
                             if (Math.random() > 0.12) return;
-                            const expected = channelAllocation(s, l.variantId, connection).sellable;
+                            const expected = channelAllocation(allocData(s, connection), l.variantId, connection).sellable;
                             const reported = Math.max(0, expected + (Math.random() < 0.5 ? -1 : 1) * (1 + Math.floor(Math.random() * 3)));
                             const id = uid("mm");
                             s.mismatches.unshift({ id, connectionId, locationId: connection.locationId, variantId: l.variantId, expected, reported, source: "manual_pull", detectedAt: now(), status: "open" });
@@ -649,7 +666,7 @@ export const useAppStore = create<AppState>()(
                             return;
                         }
                         result.compared++;
-                        const expected = channelAllocation(s, hit.variant.id, connection).sellable;
+                        const expected = channelAllocation(allocData(s, connection), hit.variant.id, connection).sellable;
                         if (expected === row.quantity) return;
                         const id = uid("mm");
                         s.mismatches.unshift({ id, connectionId, locationId: connection.locationId, variantId: hit.variant.id, expected, reported: row.quantity, source: "upload", detectedAt: now(), status: "open" });
@@ -1132,7 +1149,7 @@ export const useAppStore = create<AppState>()(
                             } else {
                                 const listing = s.listings.find((l) => l.variantId === m.variantId && l.connectionId === m.connectionId);
                                 if (listing && connection) {
-                                    listing.lastPushedQty = channelAllocation(s, m.variantId, connection).sellable;
+                                    listing.lastPushedQty = channelAllocation(allocData(s, connection), m.variantId, connection).sellable;
                                     listing.lastPushedAt = now();
                                 }
                                 closeApproval(s, a, "resolved", decision.action === "keep_ours" ? "Kept our count and re-pushed it" : "Marked handled", note);
@@ -1185,7 +1202,7 @@ export const useAppStore = create<AppState>()(
                                 listing.status = "synced";
                                 listing.message = undefined;
                                 listing.lastPushedAt = now();
-                                listing.lastPushedQty = channelAllocation(s, variantId, connection).sellable;
+                                listing.lastPushedQty = channelAllocation(allocData(s, connection), variantId, connection).sellable;
                             });
                             if (p.kind === "failed") {
                                 s.listings.filter((l) => l.connectionId === connection.id && l.status === "failed").forEach((l) => {

@@ -60,7 +60,7 @@ a whole **business unit**, or **one store or warehouse**. People assigned to a s
 | Purchase orders (view) & receiving | ✓ | ✓ | – | ✓ | – |
 | Fulfil store requests (pick/pack/ship) | ✓ | ✓ | approved transfers from their stores | – | – |
 | Approve store-to-store transfers | ✓ | ✓ | – | – | – |
-| Sales channels, allocation, reconciliation | ✓ | – | – | – | – |
+| Sales channels, channel allocation, reconciliation, company settings | ✓ | – | – | – | – |
 | Executive report, locations, employees, companies | ✓ | – | – | – | – |
 
 Stores get stock from the warehouse **or from another store** in the same business unit. Warehouse requests are
@@ -79,7 +79,7 @@ Typing a code by hand is the fallback, and **Simulate scan** lists demo barcodes
 | --- | --- |
 | Setup §5.1 | Locations (Company → Business Units → Stores/Warehouses), Employees (role + assignment), Companies |
 | Catalog §5.2 | Products & variants, naming guidance (Appendix A), live duplicate check, units of measure, barcodes, compliance flags, bulk import with duplicate review |
-| Sales channels §5.3 | Connections (Quickvee per store, Shopify/WooCommerce per BU), sync speed, safety buffer, blocked flags, push with compliance check, stock allocation (Shared / Dedicated / Hybrid) |
+| Sales channels §5.3 | Connections (Quickvee per store, Shopify/WooCommerce per BU), sync speed, safety buffer, blocked flags, push with compliance check. Channel allocation (Shared / Dedicated / Hybrid) lives in Catalog → Allocation and on each product; it is an optional company setting (Company → Settings) — when off, every channel sells from the store’s full Available stock minus its buffer |
 | Reconciliation §5.4 | Expected vs reported dashboard, pull now, upload export → mismatch report |
 | Stock §5.5 | Inventory by state (per location), product stock across all locations (Products → Stock tab), Stock Control (opening & cycle counts by scanning + adjustments with reasons, one history), activity log |
 | Purchasing §5.6 | Vendors, purchase orders and lifecycle, scan-based receiving (case → units, unexpected items, partial POs) |

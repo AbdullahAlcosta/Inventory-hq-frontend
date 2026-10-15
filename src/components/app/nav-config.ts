@@ -12,6 +12,7 @@ import {
     RefreshCw01,
     Repeat04,
     Scan,
+    Settings01,
     ShoppingCart01,
     SwitchHorizontal01,
     Truck01,
@@ -64,6 +65,7 @@ export const navSections: NavSection[] = [
         title: "Catalog",
         items: [
             { label: "Products", href: "/catalog/products", icon: Package, visible: all },
+            { label: "Allocation", href: "/catalog/allocation", icon: SwitchHorizontal01, visible: (s) => s.canManageChannels && s.allocationEnabled },
             { label: "Bulk Import", href: "/catalog/import", icon: Upload01, visible: catalogManagers },
         ],
     },
@@ -79,7 +81,6 @@ export const navSections: NavSection[] = [
         title: "Sales Channels",
         items: [
             { label: "Connections", href: "/channels/connections", icon: Link01, visible: channelManagers },
-            { label: "Allocation", href: "/channels/allocation", icon: SwitchHorizontal01, visible: channelManagers },
             { label: "Reconciliation", href: "/channels/reconciliation", icon: RefreshCw01, visible: channelManagers },
         ],
     },
@@ -89,6 +90,7 @@ export const navSections: NavSection[] = [
             { label: "Executive Report", href: "/reports/executive", icon: BarChartSquare02, visible: executives },
             { label: "Locations", href: "/setup/locations", icon: Building07, visible: executives },
             { label: "Employees", href: "/setup/employees", icon: Users01, visible: executives },
+            { label: "Settings", href: "/setup/settings", icon: Settings01, visible: executives },
         ],
     },
 ];
@@ -99,6 +101,8 @@ export const allNavItems = navSections.flatMap((s) => s.items);
 /** Extra rules for pages that aren't in the menu (create/edit pages). */
 const extraRules: { prefix: string; visible: (s: Scope) => boolean }[] = [
     { prefix: "/setup/companies", visible: executives },
+    // Reachable even when allocation is switched off (the page explains how to turn it on).
+    { prefix: "/catalog/allocation", visible: channelManagers },
     { prefix: "/catalog/products/new", visible: catalogManagers },
     { prefix: "/purchasing/orders/new", visible: purchasingManagers },
 ];

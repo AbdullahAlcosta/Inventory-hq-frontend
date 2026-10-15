@@ -135,13 +135,15 @@ const buildSteps = (scope: Scope, locationName: string | null): TourStep[] => {
             target: nav("/channels/connections"),
             when: scope.canManageChannels,
             title: "Sales channels",
-            body: "Quickvee, Shopify and WooCommerce: sync speed, safety buffers, how stock is shared between channels, pushing products, and reconciling what channels report.",
+            body: scope.allocationEnabled
+                ? "Quickvee, Shopify and WooCommerce: sync speed, safety buffers, pushing products and reconciling what channels report. How each product's stock is split between channels lives under Catalog → Allocation."
+                : "Quickvee, Shopify and WooCommerce: sync speed, safety buffers, pushing products and reconciling what channels report.",
         },
         {
             target: nav("/reports/executive"),
             when: scope.isExecutive,
             title: "Company",
-            body: "The monthly Executive report, plus Locations and Employees — set up business units, stores and warehouses, and give each person a role and assignment.",
+            body: "The monthly Executive report, Locations and Employees — set up business units, stores and warehouses, and give each person a role and assignment — plus company Settings to switch optional features like channel allocation on or off.",
         },
         {
             target: "account",

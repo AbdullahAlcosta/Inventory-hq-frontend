@@ -5,6 +5,7 @@ import { Archive, Edit05, LinkExternal01, Package, Plus, RefreshCcw01 } from "@u
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BusinessUnitAvatar } from "@/components/app/bu-avatar";
 import { Card, Field } from "@/components/app/card";
+import { AllocationTable } from "@/components/app/catalog/allocation-table";
 import { type VariantDraft, margin, priceRange } from "@/components/app/catalog/catalog-utils";
 import { ComplianceChips } from "@/components/app/catalog/compliance-chips";
 import { ProductEditModal } from "@/components/app/catalog/product-edit-modal";
@@ -105,6 +106,7 @@ function ProductDetail() {
         { id: "variants", label: "Variants", badge: variants.length },
         { id: "stock", label: "Stock" },
         ...(scope.canManageChannels ? [{ id: "channels", label: "Channels" }] : []),
+        ...(scope.canManageChannels && scope.allocationEnabled ? [{ id: "allocation", label: "Allocation" }] : []),
     ];
 
     return (
@@ -174,6 +176,11 @@ function ProductDetail() {
                 <Tabs.Panel id="stock" className="pt-6">
                     <StockTab product={product} variants={variants} scope={scope} highlight={searchParams.get("variant")} />
                 </Tabs.Panel>
+                {scope.canManageChannels && scope.allocationEnabled && (
+                    <Tabs.Panel id="allocation" className="pt-6">
+                        <AllocationTab product={product} variants={variants} />
+                    </Tabs.Panel>
+                )}
                 {scope.canManageChannels && (
                     <Tabs.Panel id="channels" className="pt-6">
                         <ChannelsTab product={product} variants={variants} scope={scope} />
@@ -607,3 +614,38 @@ export default function ProductDetailPageRoute() {
         </Suspense>
     );
 }
+
+/** How this product's stock at each store is split between the channels selling from that store. */
+const AllocationTab = ({ product, variants }: { product: Product; variants: Variant[] }) => {
+    const locations = useAppStore((s) => s.locations);
+    const connections = useAppStore((s) => s.connections);
+    const stores = locations.filter((l) => l.type === "store" && l.businessUnitId === product.businessUnitId && connections.some((c) => c.locationId === l.id));
+    const variantIds = variants.map((v) => v.id);
+    if (!stores.length)
+        return (
+            <Card>
+                <Empty title="No channels sell this product yet" description="Connect a sales channel to a store in this business unit first." />
+            </Card>
+        );
+    return (
+        <div className="flex flex-col gap-6">
+            <p className="text-sm text-tertiary">
+                Split each store’s Available stock between its channels: <b>Shared</b> (all channels sell everything), <b>Dedicated</b> (a fixed amount for one
+                channel) or <b>Hybrid</b> (part reserved for one channel, the rest shared). Each channel is told its allocation minus its safety buffer.
+            </p>
+            {stores.map((store) => (
+                <AllocationTable
+                    key={store.id}
+                    store={store}
+                    connections={connections.filter((c) => c.locationId === store.id)}
+                    variantIds={variantIds}
+                    title={store.name}
+                    description={connections
+                        .filter((c) => c.locationId === store.id)
+                        .map((c) => c.name)
+                        .join(" · ")}
+                />
+            ))}
+        </div>
+    );
+};

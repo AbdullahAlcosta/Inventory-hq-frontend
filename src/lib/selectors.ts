@@ -159,6 +159,12 @@ export const allocationFor = (data: Pick<DataSnapshot, "allocations">, variantId
         reservedQty: 0,
     };
 
+/** Company setting: is channel allocation switched on for the company that owns this business unit? */
+export const isAllocationEnabled = (data: { companies: { id: string; settings?: { channelAllocation: boolean } }[]; businessUnits: BusinessUnit[] }, businessUnitId: string) => {
+    const companyId = data.businessUnits.find((b) => b.id === businessUnitId)?.companyId;
+    return data.companies.find((c) => c.id === companyId)?.settings?.channelAllocation ?? true;
+};
+
 /**
  * How much a channel connection is told it may sell for one variant
  * (PRD §5.3): its allocation of the store's Available stock, minus its safety buffer.

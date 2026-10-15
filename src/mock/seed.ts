@@ -53,8 +53,8 @@ const upc = () => Array.from({ length: 12 }, () => randInt(0, 9)).join("");
 /* ------------------------------------------------------------------ */
 
 export const companies: Company[] = [
-    { id: "co_alcosta", name: "Alcosta Group", createdAt: daysAgo(400) },
-    { id: "co_bayline", name: "Bayline Retail Co.", createdAt: daysAgo(30) },
+    { id: "co_alcosta", name: "Alcosta Group", createdAt: daysAgo(400), settings: { channelAllocation: true } },
+    { id: "co_bayline", name: "Bayline Retail Co.", createdAt: daysAgo(30), settings: { channelAllocation: false } },
 ];
 
 export const businessUnits: BusinessUnit[] = [

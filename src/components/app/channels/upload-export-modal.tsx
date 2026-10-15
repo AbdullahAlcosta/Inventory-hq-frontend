@@ -6,7 +6,7 @@ import { Button } from "@/components/base/buttons/button";
 import { Select } from "@/components/base/select/select";
 import { ModalDialog } from "@/components/app/modal-dialog";
 import { toast } from "@/components/app/toast";
-import { channelAllocation } from "@/lib/selectors";
+import { channelAllocation, isAllocationEnabled } from "@/lib/selectors";
 import type { ChannelConnection } from "@/lib/types";
 import { useAppStore } from "@/store/app-store";
 
@@ -25,6 +25,8 @@ export const UploadExportModal = ({ isOpen, onOpenChange, connections }: { isOpe
     const variants = useAppStore((s) => s.variants);
     const stockLevels = useAppStore((s) => s.stockLevels);
     const allocations = useAppStore((s) => s.allocations);
+    const companies = useAppStore((s) => s.companies);
+    const businessUnits = useAppStore((s) => s.businessUnits);
     const reconcileUpload = useAppStore((s) => s.reconcileUpload);
 
     const [connectionId, setConnectionId] = useState<string | null>(null);
@@ -49,7 +51,8 @@ export const UploadExportModal = ({ isOpen, onOpenChange, connections }: { isOpe
         const synced = listings.filter((l) => l.connectionId === connection.id && l.status === "synced");
         const sample = synced.map((l, i) => {
             const v = variants.find((x) => x.id === l.variantId)!;
-            const expected = channelAllocation({ stockLevels, allocations }, l.variantId, connection).sellable;
+            const effective = isAllocationEnabled({ companies, businessUnits }, connection.businessUnitId) ? allocations : [];
+            const expected = channelAllocation({ stockLevels, allocations: effective }, l.variantId, connection).sellable;
             // Two numbers are off so the report has something to show.
             const off = i === 1 ? -2 : i === 3 ? 1 : 0;
             return { sku: v.sku, quantity: Math.max(0, expected + off) };

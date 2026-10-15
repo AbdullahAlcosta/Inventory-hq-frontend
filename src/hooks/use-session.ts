@@ -56,6 +56,8 @@ export interface Scope {
     canSeePurchasing: boolean;
     /** Sales channels (connections, allocation, reconciliation): executives only. */
     canManageChannels: boolean;
+    /** Company setting: channel allocation switched on (Catalog → Allocation, product Allocation tab). */
+    allocationEnabled: boolean;
 }
 
 const parseContext = (context: string) => {
@@ -73,6 +75,7 @@ export const useScope = (): Scope | null => {
     const businessUnits = useAppStore((s) => s.businessUnits);
     const locations = useAppStore((s) => s.locations);
     const context = useAppStore((s) => s.session.context ?? "all");
+    const companies = useAppStore((s) => s.companies);
 
     return useMemo(() => {
         if (!user) return null;
@@ -124,8 +127,9 @@ export const useScope = (): Scope | null => {
             canManagePurchasing: isExecutive || isWarehouseManager,
             canSeePurchasing: isExecutive || user.level === "warehouse",
             canManageChannels: isExecutive,
+            allocationEnabled: companies.find((c) => c.id === user.companyId)?.settings?.channelAllocation ?? true,
         };
-    }, [user, businessUnits, locations, context]);
+    }, [user, businessUnits, locations, context, companies]);
 };
 
 /** Same as useScope but asserts a signed-in user (pages inside the app shell). */

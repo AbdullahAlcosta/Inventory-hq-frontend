@@ -69,6 +69,8 @@ const SettingsCard = ({ connection }: { connection: ChannelConnection }) => {
     );
 };
 
+const NO_ALLOCATIONS: never[] = [];
+
 function ConnectionDetailPage() {
     const id = useSearchParams().get("id") ?? "";
     const scope = useRequiredScope();
@@ -78,7 +80,9 @@ function ConnectionDetailPage() {
     const products = useAppStore((s) => s.products);
     const variants = useAppStore((s) => s.variants);
     const stockLevels = useAppStore((s) => s.stockLevels);
-    const allocations = useAppStore((s) => s.allocations);
+    const savedAllocations = useAppStore((s) => s.allocations);
+    // With channel allocation switched off, every channel sells from the full Available stock (all "Shared").
+    const allocations = scope.allocationEnabled ? savedAllocations : NO_ALLOCATIONS;
     const listings = useAppStore((s) => s.listings);
     const locations = useAppStore((s) => s.locations);
     const businessUnits = useAppStore((s) => s.businessUnits);

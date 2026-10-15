@@ -11,10 +11,20 @@ export type ID = string;
 /* Setup: companies, business units, locations, people (PRD §5.1)      */
 /* ------------------------------------------------------------------ */
 
+export interface CompanySettings {
+    /**
+     * Channel allocation (PRD §5.3): split a store's stock between sales channels (Shared / Dedicated / Hybrid).
+     * When off, every channel sells from the store's full Available stock, minus its safety buffer.
+     */
+    channelAllocation: boolean;
+}
+
 export interface Company {
     id: ID;
     name: string;
     createdAt: string;
+    /** Missing on older saved data — treat as the defaults. */
+    settings?: CompanySettings;
 }
 
 export interface BusinessUnit {
