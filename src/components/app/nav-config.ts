@@ -57,7 +57,7 @@ export const navSections: NavSection[] = [
             { label: "Inventory", href: "/stock/inventory", icon: LayersThree01, visible: all },
             { label: "Stock Control", href: "/stock/control", icon: ClipboardCheck, visible: all },
             { label: "Store Requests", href: "/replenishment/requests", icon: Truck01, visible: all, badgeKey: "requests" },
-            { label: "Receiving", href: "/purchasing/receiving", icon: Scan, visible: purchasingStaff, badgeKey: "receiving" },
+            { label: "Receiving", href: "/purchasing/receiving", icon: Scan, visible: (s) => s.canReceive, badgeKey: "receiving" },
             { label: "Activity Log", href: "/stock/activity", icon: ClockRewind, visible: managers },
         ],
     },
@@ -88,7 +88,7 @@ export const navSections: NavSection[] = [
         title: "Company",
         items: [
             { label: "Executive Report", href: "/reports/executive", icon: BarChartSquare02, visible: executives },
-            { label: "Locations", href: "/setup/locations", icon: Building07, visible: executives },
+            { label: "Brands & Locations", href: "/setup/locations", icon: Building07, visible: executives },
             { label: "Employees", href: "/setup/employees", icon: Users01, visible: executives },
             { label: "Settings", href: "/setup/settings", icon: Settings01, visible: executives },
         ],
@@ -105,6 +105,8 @@ const extraRules: { prefix: string; visible: (s: Scope) => boolean }[] = [
     { prefix: "/catalog/allocation", visible: channelManagers },
     { prefix: "/catalog/products/new", visible: catalogManagers },
     { prefix: "/purchasing/orders/new", visible: purchasingManagers },
+    // Store staff open POs delivered to their store from Receiving; the page checks the destination.
+    { prefix: "/purchasing/orders/view", visible: (s) => s.canReceive },
 ];
 
 export const isPathAllowed = (pathname: string, scope: Scope) => {
@@ -130,7 +132,7 @@ export const requiredLocation = (pathname: string): LocationRequirement | null =
         "/stock/control": "any",
         "/replenishment/requests": "any",
         "/replenishment/requests/new": "store",
-        "/purchasing/receiving": "warehouse",
+        "/purchasing/receiving": "any",
     };
     return exact[path] ?? null;
 };

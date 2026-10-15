@@ -25,11 +25,11 @@ export const sourceLabel: Record<Mismatch["source"], string> = {
 
 export const syncLabel = (c: Pick<ChannelConnection, "syncMode" | "schedule">) => (c.syncMode === "live" ? "Live" : c.schedule);
 
-/** Eyebrow text: the active business unit, or "All business units". */
+/** Eyebrow text: the active business unit, or "All brands". */
 export const useEyebrow = (scope: Scope) => {
     const businessUnits = useAppStore((s) => s.businessUnits);
     if (scope.activeBusinessUnitIds.length === 1) return businessUnits.find((b) => b.id === scope.activeBusinessUnitIds[0])?.name ?? "";
-    return "All business units";
+    return "All brands";
 };
 
 /**

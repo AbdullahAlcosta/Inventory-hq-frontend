@@ -224,7 +224,7 @@ export default function ImportPage() {
                         <div className="flex flex-col gap-5">
                             {activeBus.length > 1 && (
                                 <Select
-                                    label="Import into business unit"
+                                    label="Import into brand"
                                     items={activeBus.map((b) => ({ id: b.id, label: b.name }))}
                                     selectedKey={buId}
                                     onSelectionChange={(k: Key | null) => setBuId(String(k))}

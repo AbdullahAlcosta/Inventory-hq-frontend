@@ -64,7 +64,7 @@ export default function ReconciliationPage() {
             <PageHeader
                 eyebrow={eyebrow}
                 title="Reconciliation"
-                description="Quickvee is pulled twice daily per store; Shopify and WooCommerce per business unit. Any mismatch is flagged, no minimum."
+                description="Quickvee is pulled twice daily per store; Shopify and WooCommerce per brand. Any mismatch is flagged, no minimum."
                 actions={
                     <Button color="primary" iconLeading={Upload01} onPress={() => setUploadOpen(true)} isDisabled={!connections.length}>
                         Upload export

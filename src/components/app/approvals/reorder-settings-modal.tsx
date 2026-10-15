@@ -12,7 +12,7 @@ import { useAppStore } from "@/store/app-store";
 
 const NO_VENDOR = "__none";
 
-/** Edit a variant's reorder settings (PRD §5.8): reorder point, restock qty, lead time, default vendor. */
+/** Edit a variant's reorder settings (PRD §5.8): minimum qty, restock qty, cover days, lead time, default vendor. */
 export const ReorderSettingsModal = ({ variantId, onClose }: { variantId: string | null; onClose: () => void }) => {
     const variant = useAppStore((s) => s.variants.find((v) => v.id === variantId));
     const product = useAppStore((s) => (variantId ? productOf(s, variantId) : undefined));
@@ -22,6 +22,7 @@ export const ReorderSettingsModal = ({ variantId, onClose }: { variantId: string
     const [reorderPoint, setReorderPoint] = useState(0);
     const [restockQty, setRestockQty] = useState(0);
     const [leadTime, setLeadTime] = useState(0);
+    const [coverDays, setCoverDays] = useState(14);
     const [vendorId, setVendorId] = useState<string>(NO_VENDOR);
 
     useEffect(() => {
@@ -29,6 +30,7 @@ export const ReorderSettingsModal = ({ variantId, onClose }: { variantId: string
         setReorderPoint(variant.reorderPoint);
         setRestockQty(variant.restockQty);
         setLeadTime(variant.leadTimeDays);
+        setCoverDays(variant.coverDays ?? 14);
         setVendorId(variant.vendorId ?? NO_VENDOR);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [variantId]);
@@ -39,7 +41,7 @@ export const ReorderSettingsModal = ({ variantId, onClose }: { variantId: string
 
     const save = () => {
         if (!variant) return;
-        updateVariant(variant.id, { reorderPoint, restockQty, leadTimeDays: leadTime, vendorId: vendorId === NO_VENDOR ? null : vendorId });
+        updateVariant(variant.id, { reorderPoint, restockQty, leadTimeDays: leadTime, coverDays, vendorId: vendorId === NO_VENDOR ? null : vendorId });
         toast.success("Reorder settings saved", product ? `${product.name} — ${variant.name}` : undefined);
         onClose();
     };
@@ -49,7 +51,7 @@ export const ReorderSettingsModal = ({ variantId, onClose }: { variantId: string
             isOpen={!!variant}
             onOpenChange={(o) => !o && onClose()}
             title="Reorder settings"
-            description="Used to suggest reorders. Suggestions always wait for approval."
+            description="Used to forecast reorders: sales/day × (lead time + cover days) + minimum qty, minus stock and open POs."
             footer={
                 <>
                     <Button color="secondary" size="lg" onPress={onClose}>
@@ -65,7 +67,7 @@ export const ReorderSettingsModal = ({ variantId, onClose }: { variantId: string
                 <div className="flex flex-col gap-5">
                     <VariantCell variantId={variant.id} link={false} />
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <InputNumber label="Reorder point" hint="Suggest a reorder at or below this many units." minValue={0} value={reorderPoint} onChange={(n) => setReorderPoint(num(n))} />
+                        <InputNumber label="Minimum qty" hint="Reorder when stock (incl. open POs) is at or below this." minValue={0} value={reorderPoint} onChange={(n) => setReorderPoint(num(n))} />
                         <InputNumber
                             label="Restock quantity"
                             hint={upp > 1 ? `Units to order · ${Math.ceil(restockQty / upp)} ${product?.uom.purchaseUnit.toLowerCase()} of ${upp}` : "Units to order"}
@@ -74,6 +76,7 @@ export const ReorderSettingsModal = ({ variantId, onClose }: { variantId: string
                             onChange={(n) => setRestockQty(num(n))}
                         />
                         <InputNumber label="Lead time (days)" hint="Days from order to delivery." minValue={0} value={leadTime} onChange={(n) => setLeadTime(num(n))} />
+                        <InputNumber label="Cover days" hint="Days of stock to order beyond lead time." minValue={0} value={coverDays} onChange={(n) => setCoverDays(num(n))} />
                         <Select
                             label="Default vendor"
                             items={[{ id: NO_VENDOR, label: "No default vendor" }, ...vendors.map((v) => ({ id: v.id, label: v.name }))]}

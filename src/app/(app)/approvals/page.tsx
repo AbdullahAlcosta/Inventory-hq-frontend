@@ -89,7 +89,7 @@ function ApprovalsView() {
     };
 
     const buName = (id: string) => businessUnits.find((b) => b.id === id)?.name ?? "—";
-    const eyebrow = scope.activeBusinessUnitIds.length === 1 ? buName(scope.activeBusinessUnitIds[0]) : "All business units";
+    const eyebrow = scope.activeBusinessUnitIds.length === 1 ? buName(scope.activeBusinessUnitIds[0]) : "All brands";
     const createdPos = purchaseOrders.filter((po) => createdPoIds.includes(po.id));
 
     return (

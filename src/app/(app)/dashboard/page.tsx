@@ -35,7 +35,7 @@ export default function DashboardPage() {
 
     const onBu = scope.context.startsWith("bu:");
     const title = onBu ? `${buName(scope.context.slice(3))} overview` : scope.isExecutive ? "Company overview" : "My locations";
-    const eyebrow = onBu ? "Business unit" : scope.isExecutive ? "All locations" : `${scope.locations.length} locations`;
+    const eyebrow = onBu ? "Brand" : scope.isExecutive ? "All locations" : `${scope.locations.length} locations`;
 
     return (
         <>

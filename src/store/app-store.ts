@@ -18,6 +18,7 @@ import {
     isAllocationEnabled,
     lookupCode,
     productOf,
+    stockAt,
     variantLabel,
 } from "@/lib/selectors";
 import type {
@@ -44,8 +45,14 @@ import type {
     StoreRequest,
     Variant,
     Vendor,
+    VendorInvoice,
+    InvoiceIssue,
+    InvoiceLine,
 } from "@/lib/types";
 import * as seed from "@/mock/seed";
+import { vendorInvoices as seedInvoices } from "@/mock/invoices";
+import { blockingIssues, formatPct, reconcileInvoice } from "@/lib/invoice";
+import { forecastOrder, unitsOnOrder } from "@/lib/forecast";
 
 /* ------------------------------------------------------------------ */
 /* State shape                                                         */
@@ -71,6 +78,7 @@ export interface AppData {
     approvals: Approval[];
     salesHistory: seed.DailySales[];
     activity: ActivityEntry[];
+    vendorInvoices: VendorInvoice[];
 }
 
 export interface Session {
@@ -156,7 +164,20 @@ interface Actions {
 
     /* approvals */
     approveReorders: (items: { approvalId: string; quantity: number }[]) => string[];
+    /** Auto-reorder: draft POs (never sent) for warehouse items at/below minimum qty, one per vendor + destination. Returns new PO ids. */
+    runAutoReorder: (companyId: string) => string[];
     decideApproval: (approvalId: string, decision: ApprovalDecision, note?: string) => void;
+
+    /* vendor invoices */
+    /**
+     * Save a scanned vendor invoice, reconcile it against its PO and send any problems to Approvals.
+     * Refuses an invoice number already recorded for the same vendor (returns `duplicateOf`).
+     */
+    recordInvoice: (input: RecordInvoiceInput) => { id: string | null; issues: InvoiceIssue[]; duplicateOf?: string };
+    /** Accept & update costs / dispute with vendor / mark resolved. Closes the invoice's approval. */
+    resolveInvoiceIssues: (invoiceId: string, action: InvoiceResolution, note?: string) => void;
+    /** "Receive without a PO": builds a PO (source "invoice") from invoice lines; unknown codes become draft products. Returns the PO id. */
+    createPoFromInvoice: (input: { vendorId: string; destinationId: string; lines: InvoiceLine[]; invoiceNumber: string; invoiceId?: string }) => string;
 }
 
 export type ApprovalDecision =
@@ -173,7 +194,13 @@ export type ApprovalDecision =
     | { action: "new_variant" }
     | { action: "new_product" }
     | { action: "retry" }
-    | { action: "unlist" };
+    | { action: "unlist" }
+    | { action: "accept_costs" }
+    | { action: "dispute" };
+
+export type InvoiceResolution = "accept_costs" | "dispute" | "resolve";
+
+export type RecordInvoiceInput = Pick<VendorInvoice, "vendorId" | "poId" | "destinationId" | "number" | "accountNumber" | "date" | "pages" | "totalPages" | "lines" | "imageName">;
 
 export type AppState = AppData & { session: Session } & Actions;
 
@@ -202,6 +229,7 @@ const initialData = (): AppData =>
         approvals: seed.approvals,
         salesHistory: seed.salesHistory,
         activity: seed.activity,
+        vendorInvoices: seedInvoices,
     });
 
 const uid = (prefix: string) => `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
@@ -275,6 +303,43 @@ const allocData = (s: Draft, connection: ChannelConnection) => ({
     allocations: isAllocationEnabled(s, connection.businessUnitId) ? s.allocations : [],
 });
 
+/** Vendor invoice decisions (shared by the Approvals panel and the invoice page). */
+const applyInvoiceResolution = (s: Draft, inv: VendorInvoice, action: InvoiceResolution, note?: string) => {
+    let decision = "Resolved";
+    if (action === "accept_costs") {
+        const po = inv.poId ? s.purchaseOrders.find((p) => p.id === inv.poId) : undefined;
+        let changed = 0;
+        inv.issues
+            .filter((i) => i.kind === "price_change" && i.variantId && i.invoicePrice !== undefined)
+            .forEach((i) => {
+                const v = s.variants.find((x) => x.id === i.variantId);
+                const product = v ? s.products.find((p) => p.id === v.productId) : undefined;
+                if (!v || !product) return;
+                const upp = product.uom.unitsPerPurchaseUnit;
+                const before = v.cost;
+                v.cost = Math.round((i.invoicePrice! / upp) * 1000) / 1000;
+                const line = po?.lines.find((l) => l.variantId === v.id);
+                if (line) line.unitCost = i.invoicePrice!;
+                changed++;
+                log(s, "catalog", `Cost of ${variantLabel(s, v.id)} updated from invoice #${inv.number}: ${before.toFixed(2)} → ${v.cost.toFixed(2)} per ${product.uom.sellingUnit.toLowerCase()} (${formatPct(before > 0 ? ((v.cost - before) / before) * 100 : 0)})`, {
+                    locationId: inv.destinationId,
+                    variantId: v.id,
+                });
+            });
+        decision = changed ? `Accepted — ${changed} cost${changed === 1 ? "" : "s"} updated` : "Accepted as billed";
+        inv.status = "resolved";
+    } else if (action === "dispute") {
+        inv.disputeNote = note || "Disputed with vendor — waiting on a credit or corrected invoice.";
+        decision = "Disputed with vendor";
+    } else {
+        inv.status = "resolved";
+    }
+    inv.resolution = decision;
+    const a = inv.approvalId ? s.approvals.find((x) => x.id === inv.approvalId) : undefined;
+    if (a && a.status === "pending") closeApproval(s, a, "resolved", decision, note);
+    log(s, "purchase_order", `Invoice #${inv.number}: ${decision}`, { locationId: inv.destinationId });
+};
+
 const applyStockDelta = (s: Draft, variantId: string, locationId: string, delta: number, state: StockState = "available") => {
     const row = stockRow(s, variantId, locationId);
     row[state] = Math.max(0, row[state] + delta);
@@ -313,6 +378,8 @@ export const useAppStore = create<AppState>()(
                     c.settings = { channelAllocation: true, ...c.settings, ...patch };
                     if (patch.channelAllocation !== undefined)
                         log(s, "setup", `Channel allocation turned ${patch.channelAllocation ? "on" : "off"} for ${c.name}`);
+                    if (patch.autoPO !== undefined)
+                        log(s, "setup", `Automatic reorders set to “${{ off: "Off", suggest: "Suggest in Approvals", auto_draft: "Create draft POs" }[patch.autoPO]}” for ${c.name}`);
                 }),
             completeTour: (userId) =>
                 set((s) => {
@@ -685,6 +752,112 @@ export const useAppStore = create<AppState>()(
                 return result;
             },
 
+            /* ---------------- vendor invoices ---------------- */
+            recordInvoice: (input) => {
+                const state = get();
+                const number = input.number.trim();
+                const dup = state.vendorInvoices.find((i) => i.vendorId === input.vendorId && i.number.trim().toLowerCase() === number.toLowerCase());
+                if (dup) return { id: null, issues: [], duplicateOf: dup.id };
+                const po = input.poId ? state.purchaseOrders.find((p) => p.id === input.poId) : null;
+                const result = reconcileInvoice(state, { lines: input.lines, po, pages: input.pages, totalPages: input.totalPages });
+                const id = uid("inv");
+                const needsReview = blockingIssues(result.issues).length > 0;
+                set((s) => {
+                    const by = s.session.userId ?? "system";
+                    const vendor = s.vendors.find((v) => v.id === input.vendorId);
+                    const businessUnitId = buOfLocation(s, input.destinationId);
+                    const inv: VendorInvoice = {
+                        ...input,
+                        number,
+                        id,
+                        businessUnitId,
+                        total: result.totals.invoiceTotal,
+                        status: needsReview ? "issues" : "matched",
+                        issues: result.issues,
+                        approvalId: null,
+                        createdBy: by,
+                        createdAt: now(),
+                    };
+                    if (needsReview) {
+                        const count = blockingIssues(result.issues).length;
+                        inv.approvalId = addApproval(s, {
+                            type: "invoice_issue",
+                            title: `Invoice #${number} — ${vendor?.name ?? "Vendor"}`,
+                            summary: `${count} problem${count === 1 ? "" : "s"} found checking the invoice${po ? ` against ${po.number}` : ""}. Billed ${result.totals.invoiceTotal.toFixed(2)}${po ? ` vs PO ${result.totals.poTotal.toFixed(2)}` : ""}.`,
+                            businessUnitId,
+                            locationId: input.destinationId,
+                            payload: { type: "invoice_issue", invoiceId: id },
+                        });
+                    }
+                    s.vendorInvoices.unshift(inv);
+                    if (po) {
+                        const p = s.purchaseOrders.find((x) => x.id === po.id);
+                        p?.history.push({ status: p.status, by, at: now(), note: `Vendor invoice #${number} recorded${needsReview ? " — issues sent to Approvals" : " — matches the PO"}.` });
+                    }
+                    log(s, "purchase_order", `Invoice #${number} from ${vendor?.name} recorded${po ? ` for ${po.number}` : ""}${needsReview ? " — sent to Approvals" : " — matched"}`, { locationId: input.destinationId });
+                });
+                return { id, issues: result.issues };
+            },
+            resolveInvoiceIssues: (invoiceId, action, note) =>
+                set((s) => {
+                    const inv = s.vendorInvoices.find((i) => i.id === invoiceId);
+                    if (inv) applyInvoiceResolution(s, inv, action, note);
+                }),
+            createPoFromInvoice: ({ vendorId, destinationId, lines, invoiceNumber, invoiceId }) => {
+                // Merge duplicate codes, resolve each to a variant (or a new draft product).
+                const merged = new Map<string, InvoiceLine>();
+                lines.forEach((l) => {
+                    const key = l.code.trim();
+                    if (!key) return;
+                    const m = merged.get(key);
+                    if (m) {
+                        m.qty += l.qty;
+                        m.extended += l.extended;
+                    } else merged.set(key, { ...l, code: key });
+                });
+                const poLines: Omit<POLine, "receivedUnits">[] = [];
+                set((s) => {
+                    const businessUnitId = buOfLocation(s, destinationId);
+                    merged.forEach((l) => {
+                        let hit = lookupCode(s, l.code);
+                        if (!hit) {
+                            const productId = createProductDraft(
+                                s,
+                                {
+                                    businessUnitId,
+                                    brand: l.description.split(" ")[0] ?? "",
+                                    productLine: l.description.split(" ").slice(1).join(" "),
+                                    productType: "",
+                                    name: l.description,
+                                    description: `Added from invoice #${invoiceNumber}. Review the name, units and price.`,
+                                    attributes: {},
+                                    complianceFlags: [],
+                                    uom: { purchaseUnit: "Case", sellingUnit: "Each", unitsPerPurchaseUnit: 1 },
+                                    status: "draft",
+                                },
+                                [{ ...defaultVariant({ variant: "Default", cost: l.unitPrice }, vendorId), barcodes: [{ code: l.code, unit: "purchase" }] }],
+                            );
+                            log(s, "catalog", `Draft product “${l.description}” created from invoice #${invoiceNumber}`);
+                            hit = lookupCode(s, l.code);
+                            void productId;
+                        }
+                        if (!hit) return;
+                        const upp = hit.unit === "selling" ? hit.product.uom.unitsPerPurchaseUnit : 1;
+                        const qty = l.qty / upp;
+                        const existing = poLines.find((x) => x.variantId === hit!.variant.id);
+                        if (existing) existing.orderedQty += qty;
+                        else poLines.push({ variantId: hit.variant.id, orderedQty: qty, unitCost: Math.round(l.unitPrice * upp * 100) / 100 });
+                    });
+                });
+                const poId = get().createPurchaseOrder({ vendorId, warehouseId: destinationId, lines: poLines, notes: `Created from vendor invoice #${invoiceNumber} (received without a PO).`, source: "invoice" });
+                get().markPOSent(poId);
+                set((s) => {
+                    const inv = invoiceId ? s.vendorInvoices.find((i) => i.id === invoiceId) : undefined;
+                    if (inv) inv.poId = poId;
+                });
+                return poId;
+            },
+
             /* ---------------- purchasing ---------------- */
             addVendor: (input) => {
                 const id = uid("v");
@@ -1019,6 +1192,46 @@ export const useAppStore = create<AppState>()(
                 });
                 return created;
             },
+            runAutoReorder: (companyId) => {
+                const state = get();
+                const buIds = state.businessUnits.filter((b) => b.companyId === companyId).map((b) => b.id);
+                const groups = new Map<string, { vendorId: string; warehouseId: string; lines: Omit<POLine, "receivedUnits">[] }>();
+                state.variants.forEach((v) => {
+                    const product = state.products.find((p) => p.id === v.productId);
+                    if (!product || product.status !== "active" || !v.vendorId || !buIds.includes(product.businessUnitId)) return;
+                    // Stores replenish from the warehouse — auto-reorder only buys for warehouses.
+                    state.locations
+                        .filter((l) => l.type === "warehouse" && l.businessUnitId === product.businessUnitId)
+                        .forEach((wh) => {
+                            const upp = product.uom.unitsPerPurchaseUnit;
+                            const fc = forecastOrder(v, product, stockAt(state, v.id, wh.id).available, unitsOnOrder(state.purchaseOrders, v.id, wh.id, upp));
+                            if (!fc.needsOrder) return;
+                            const key = `${v.vendorId}|${wh.id}`;
+                            const g = groups.get(key) ?? { vendorId: v.vendorId!, warehouseId: wh.id, lines: [] };
+                            g.lines.push({ variantId: v.id, orderedQty: fc.cases, unitCost: +(v.cost * upp).toFixed(2) });
+                            groups.set(key, g);
+                        });
+                });
+                const created: string[] = [];
+                groups.forEach((g) => {
+                    const poId = get().createPurchaseOrder({ vendorId: g.vendorId, warehouseId: g.warehouseId, lines: g.lines, notes: "Draft created by auto-reorder. Review, then mark as sent.", source: "reorder" });
+                    created.push(poId);
+                    set((s) => {
+                        const po = s.purchaseOrders.find((p) => p.id === poId)!;
+                        po.auto = true;
+                        // Suggestions for these items are covered by the draft now.
+                        s.approvals.forEach((a) => {
+                            if (a.status === "pending" && a.payload.type === "reorder" && a.payload.warehouseId === g.warehouseId && g.lines.some((l) => a.payload.type === "reorder" && l.variantId === a.payload.variantId))
+                                closeApproval(s, a, "resolved", `Draft ${po.number} created by auto-reorder`);
+                        });
+                    });
+                });
+                set((s) => {
+                    const lines = Array.from(groups.values()).reduce((n, g) => n + g.lines.length, 0);
+                    log(s, "purchase_order", created.length ? `Auto-reorder created ${created.length} draft PO${created.length === 1 ? "" : "s"} (${lines} line${lines === 1 ? "" : "s"})` : "Auto-reorder ran — nothing below minimum qty");
+                });
+                return created;
+            },
             decideApproval: (approvalId, decision, note) =>
                 set((s) => {
                     const a = s.approvals.find((x) => x.id === approvalId);
@@ -1245,13 +1458,23 @@ export const useAppStore = create<AppState>()(
                         }
                     }
 
+                    if (p.type === "invoice_issue") {
+                        const inv = s.vendorInvoices.find((i) => i.id === p.invoiceId);
+                        if (inv && a.status === "pending") {
+                            applyInvoiceResolution(s, inv, decision.action === "accept_costs" ? "accept_costs" : decision.action === "dispute" ? "dispute" : "resolve", note);
+                        } else if (inv && (a.status as Approval["status"]) !== "pending") {
+                            inv.status = "resolved";
+                            inv.resolution = "Dismissed";
+                        }
+                    }
+
                     if (a.status !== "pending") log(s, "approval", `${a.title} — ${a.decision}`, { locationId: a.locationId });
                 }),
         })),
         {
             name: "inventory-hq-demo",
             // Bump when the data shape changes; older saved demo data is replaced with fresh seed data.
-            version: 2,
+            version: 3,
             migrate: () => ({ ...initialData(), session: { userId: null, context: "all" } }) as unknown as AppState,
             storage: createJSONStorage(() => localStorage),
         },

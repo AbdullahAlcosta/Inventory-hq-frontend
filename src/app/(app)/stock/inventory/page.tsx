@@ -206,7 +206,7 @@ export default function InventoryPage() {
                                                 Low stock
                                             </Badge>
                                         ) : (
-                                            <span className="text-tertiary">{r.location.type === "warehouse" ? `ROP ${r.variant.reorderPoint}` : "OK"}</span>
+                                            <span className="text-tertiary">{r.location.type === "warehouse" ? `Min ${r.variant.reorderPoint}` : "OK"}</span>
                                         )}
                                     </Table.Cell>
                                     <Table.Cell className={cx("px-3 whitespace-nowrap", r.cover < 3 && "font-medium text-error-primary")}>

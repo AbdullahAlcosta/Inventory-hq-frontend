@@ -106,7 +106,7 @@ export default function NewProductPage() {
     const lineHasVariant = namedRows.find((r) => normalize(draft.productLine).includes(normalize(r.name)) && normalize(r.name).length > 2);
 
     const missing: string[] = [];
-    if (!buId) missing.push("business unit");
+    if (!buId) missing.push("brand");
     if (!draft.brand.trim()) missing.push("brand");
     if (!draft.productLine.trim()) missing.push("product line");
     if (!draft.productType.trim()) missing.push("product type");
@@ -171,7 +171,7 @@ export default function NewProductPage() {
                         <div className="flex flex-col gap-4">
                             {activeBus.length > 1 && (
                                 <Select
-                                    label="Business unit"
+                                    label="Brand"
                                     items={activeBus.map((b) => ({ id: b.id, label: b.name }))}
                                     selectedKey={buId}
                                     onSelectionChange={(k: Key | null) => {

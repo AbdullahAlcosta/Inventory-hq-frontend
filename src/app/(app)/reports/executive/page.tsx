@@ -53,7 +53,7 @@ export default function ExecutiveReportPage() {
     }
 
     const activeBu = scope.activeBusinessUnitIds.length === 1 && scope.businessUnitIds.length > 1 ? businessUnits.find((b) => b.id === scope.activeBusinessUnitIds[0]) : undefined;
-    const scopeLabel = activeBu ? activeBu.name : `${company?.name ?? "Company"} · all business units`;
+    const scopeLabel = activeBu ? activeBu.name : `${company?.name ?? "Company"} · all brands`;
     const stores = report.byLocation.filter((r) => r.location.type === "store");
     const warehouses = report.byLocation.filter((r) => r.location.type === "warehouse");
 
@@ -68,7 +68,7 @@ export default function ExecutiveReportPage() {
         a.click();
         a.remove();
         URL.revokeObjectURL(url);
-        toast.success("CSV downloaded", `${report.byBusinessUnit.length} business units, ${report.byLocation.length} locations`);
+        toast.success("CSV downloaded", `${report.byBusinessUnit.length} brands, ${report.byLocation.length} locations`);
     };
 
     return (
@@ -107,7 +107,7 @@ export default function ExecutiveReportPage() {
 
             {report.byBusinessUnit.length === 0 ? (
                 <Card>
-                    <Empty title="Nothing to report yet" description="Add a business unit and locations under Setup to see the monthly report." />
+                    <Empty title="Nothing to report yet" description="Add a brand and locations under Setup to see the monthly report." />
                 </Card>
             ) : (
                 <>
@@ -141,15 +141,15 @@ export default function ExecutiveReportPage() {
                         <StatCard label="Inventory value at retail" icon={Tag01} value={formatCurrency(report.inventory.retailAll)} hint={`${formatNumber(report.inventory.units)} units on hand`} />
                     </div>
 
-                    {/* By business unit */}
-                    <Card title="Sales & margin by Business Unit" description={`${period.label} · store sales from all connected channels`} flush>
+                    {/* By brand */}
+                    <Card title="Sales & margin by Brand" description={`${period.label} · store sales from all connected channels`} flush>
                         <div className="px-4 pt-4 md:px-6">
                             <BuBarChart data={report.byBusinessUnit.map((b) => ({ name: b.businessUnit.name, sales: Math.round(b.sales), margin: Math.round(b.margin) }))} />
                         </div>
                         <div className="mt-4 border-t border-secondary">
-                            <Table aria-label="Sales and margin by business unit" size="sm">
+                            <Table aria-label="Sales and margin by brand" size="sm">
                                 <Table.Header>
-                                    <Table.Head label="Business Unit" isRowHeader />
+                                    <Table.Head label="Brand" isRowHeader />
                                     <Table.Head label="Sales" />
                                     <Table.Head label="Cost" />
                                     <Table.Head label="Gross margin" />
@@ -191,7 +191,7 @@ export default function ExecutiveReportPage() {
                         <Table aria-label="By location">
                             <Table.Header>
                                 <Table.Head label="Location" isRowHeader />
-                                <Table.Head label="Business Unit" />
+                                <Table.Head label="Brand" />
                                 <Table.Head label="Sales" />
                                 <Table.Head label="Cost" />
                                 <Table.Head label="Margin" />
@@ -231,12 +231,12 @@ export default function ExecutiveReportPage() {
                     {/* Inventory value */}
                     <TableCard.Root size="sm">
                         <TableCard.Header
-                            title="Inventory value by Business Unit and location"
+                            title="Inventory value by Brand and location"
                             description="Stock on hand today × variant cost / price. “All states” includes In Transit, Returns and Damaged; only Available is sellable."
                         />
                         <Table aria-label="Inventory value">
                             <Table.Header>
-                                <Table.Head label="Business Unit / Location" isRowHeader />
+                                <Table.Head label="Brand / Location" isRowHeader />
                                 <Table.Head label="Units (all states)" />
                                 <Table.Head label="Available at cost" />
                                 <Table.Head label="All states at cost" />
@@ -299,7 +299,7 @@ export default function ExecutiveReportPage() {
                                     <Table.Header>
                                         <Table.Head label="#" />
                                         <Table.Head label="Product" isRowHeader />
-                                        <Table.Head label="Business Unit" />
+                                        <Table.Head label="Brand" />
                                         <Table.Head label="Est. units" />
                                         <Table.Head label="Est. sales" />
                                     </Table.Header>

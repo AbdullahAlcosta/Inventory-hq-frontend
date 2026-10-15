@@ -48,12 +48,12 @@ function PurchaseOrderDetailPage() {
     );
     const partialApproval = relatedApprovals.find((a) => a.payload.type === "partial_po");
 
-    if (!po || !scope.locationIds.includes(po.warehouseId)) {
+    if (!po || !(scope.locationIds.includes(po.warehouseId) || (scope.canManagePurchasing && scope.businessUnitIds.includes(po.businessUnitId)))) {
         return (
             <div>
                 <PageHeader backHref="/purchasing/orders" backLabel="Purchase Orders" title="Purchase order not found" />
                 <Card>
-                    <Empty title="This PO doesn’t exist or isn’t for one of your warehouses." />
+                    <Empty title="This PO doesn’t exist or isn’t for one of your locations." />
                 </Card>
             </div>
         );
@@ -92,7 +92,7 @@ function PurchaseOrderDetailPage() {
                         <StatusBadge status={po.status} size="lg" />
                         {po.source === "reorder" && (
                             <Badge type="pill-color" color="purple" size="md">
-                                Reorder
+                                {po.auto ? "Auto · draft for review" : "Reorder"}
                             </Badge>
                         )}
                     </span>
@@ -156,7 +156,7 @@ function PurchaseOrderDetailPage() {
             <Card>
                 <dl className="grid grid-cols-2 gap-5 lg:grid-cols-4">
                     <Field label="Vendor">{vendor && scope.canManagePurchasing ? <Link href={`/purchasing/vendors/view?id=${vendor.id}`} className="hover:underline">{vendor.name}</Link> : (vendor?.name ?? "—")}</Field>
-                    <Field label="Destination warehouse">
+                    <Field label="Destination">
                         <LocationName id={po.warehouseId} />
                     </Field>
                     <Field label="Created by">
@@ -286,7 +286,7 @@ function PurchaseOrderDetailPage() {
                 confirmLabel="Mark as sent"
                 onConfirm={() => {
                     markPOSent(po.id);
-                    toast.success(`${po.number} sent to vendor`, "It now shows up in Receiving for the warehouse.");
+                    toast.success(`${po.number} sent to vendor`, "It now shows up in Receiving at its destination.");
                 }}
             />
         </div>

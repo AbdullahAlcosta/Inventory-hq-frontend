@@ -54,6 +54,10 @@ export interface Scope {
     canManagePurchasing: boolean;
     /** Purchase orders & receiving screens: executives and warehouse staff. */
     canSeePurchasing: boolean;
+    /** Receiving screen: executives, warehouse staff, and store staff (for POs delivered to their store). */
+    canReceive: boolean;
+    /** Company setting: automatic reorders mode. */
+    autoPO: "off" | "suggest" | "auto_draft";
     /** Sales channels (connections, allocation, reconciliation): executives only. */
     canManageChannels: boolean;
     /** Company setting: channel allocation switched on (Catalog → Allocation, product Allocation tab). */
@@ -126,7 +130,9 @@ export const useScope = (): Scope | null => {
             canManageCatalog: isExecutive || isWarehouseManager,
             canManagePurchasing: isExecutive || isWarehouseManager,
             canSeePurchasing: isExecutive || user.level === "warehouse",
+            canReceive: true,
             canManageChannels: isExecutive,
+            autoPO: companies.find((c) => c.id === user.companyId)?.settings?.autoPO ?? "suggest",
             allocationEnabled: companies.find((c) => c.id === user.companyId)?.settings?.channelAllocation ?? true,
         };
     }, [user, businessUnits, locations, context, companies]);

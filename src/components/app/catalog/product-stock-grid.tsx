@@ -16,7 +16,7 @@ import { cx } from "@/utils/cx";
 export type RequestFor = { own: string[]; businessUnitId: string | null } | null;
 
 /**
- * Store staff can ask for stock from the warehouse or from another store in the same business unit.
+ * Store staff can ask for stock from the warehouse or from another store in the same brand.
  * Executives and warehouse staff don't raise store requests.
  */
 export const useRequestFor = (scope: Scope): RequestFor =>
@@ -28,7 +28,7 @@ export const useRequestFor = (scope: Scope): RequestFor =>
         return { own, businessUnitId: store?.businessUnitId ?? null };
     }, [scope]);
 
-/** Available quantity of each variant at every store and warehouse in the product's business unit. */
+/** Available quantity of each variant at every store and warehouse in the product's brand. */
 export function ProductStockCard({
     title,
     product,

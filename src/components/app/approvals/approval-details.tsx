@@ -11,6 +11,7 @@ import { Button } from "@/components/base/buttons/button";
 import { InputNumber } from "@/components/base/input/input-number";
 import { useRequiredScope } from "@/hooks/use-session";
 import { formatCurrency, formatDate, formatDateTime, formatNumber, formatSigned, pluralize } from "@/lib/format";
+import { forecastOrder, unitsOnOrder } from "@/lib/forecast";
 import { productOf, stockAt } from "@/lib/selectors";
 import type { Approval, ApprovalPayload } from "@/lib/types";
 import { useAppStore } from "@/store/app-store";
@@ -80,6 +81,8 @@ export const ReorderDetail = ({ payload, quantity, onQuantity, editable }: { pay
     const product = useAppStore((s) => productOf(s, payload.variantId));
     const vendor = useAppStore((s) => s.vendors.find((v) => v.id === payload.vendorId));
     const live = useAppStore((s) => stockAt(s, payload.variantId, payload.warehouseId).available);
+    const purchaseOrders = useAppStore((s) => s.purchaseOrders);
+    const forecast = variant && product ? forecastOrder(variant, product, live, unitsOnOrder(purchaseOrders, variant.id, payload.warehouseId, product.uom.unitsPerPurchaseUnit)) : null;
     const days = Math.max(0, Math.round((new Date(payload.runOutDate).getTime() - Date.now()) / 86400000));
     const upp = product?.uom.unitsPerPurchaseUnit ?? 1;
     const cases = Math.max(1, Math.ceil(quantity / upp));
@@ -102,8 +105,14 @@ export const ReorderDetail = ({ payload, quantity, onQuantity, editable }: { pay
                 <Field label="Lead time">{variant ? pluralize(variant.leadTimeDays, "day") : "—"}</Field>
                 <Field label="Vendor">{vendor?.name ?? <span className="text-error-primary">No default vendor</span>}</Field>
                 {variant && (
-                    <Field label="Reorder point / restock">
-                        {formatNumber(variant.reorderPoint)} / {formatNumber(variant.restockQty)}
+                    <Field label="Minimum qty · cover">
+                        {formatNumber(variant.reorderPoint)} · {pluralize(variant.coverDays ?? 14, "day")} beyond lead time
+                    </Field>
+                )}
+                {forecast && (
+                    <Field label="Forecast">
+                        {forecast.cases ? `${forecast.cases} × ${product?.uom.purchaseUnit.toLowerCase()} (${formatNumber(forecast.units)} units)` : "Nothing needed now"}
+                        <span className="block text-xs font-normal text-tertiary">{forecast.reason}</span>
                     </Field>
                 )}
             </FieldGrid>

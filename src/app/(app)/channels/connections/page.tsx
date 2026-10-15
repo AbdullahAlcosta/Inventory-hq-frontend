@@ -80,7 +80,7 @@ export default function ConnectionsPage() {
         { title: "Store-level (Quickvee)", description: "One connection per store. Sells that store's stock.", items: connections.filter((c) => c.level === "store") },
         {
             title: "Business-unit level (Shopify, WooCommerce)",
-            description: "One online store per business unit, fulfilled from one store's stock.",
+            description: "One online store per brand, fulfilled from one store's stock.",
             items: connections.filter((c) => c.level === "business_unit"),
         },
     ];

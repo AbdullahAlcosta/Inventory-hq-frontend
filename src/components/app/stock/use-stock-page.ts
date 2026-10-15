@@ -3,12 +3,12 @@
 import { useScope } from "@/hooks/use-session";
 import { useAppStore } from "@/store/app-store";
 
-/** Page eyebrow: the active business unit (sidebar switcher), or "All business units". */
+/** Page eyebrow: the active business unit (sidebar switcher), or "All brands". */
 export const useActiveBuName = () => {
     const scope = useScope();
     const businessUnits = useAppStore((s) => s.businessUnits);
     const ids = scope?.activeBusinessUnitIds ?? [];
-    return ids.length === 1 ? (businessUnits.find((b) => b.id === ids[0])?.name ?? "") : "All business units";
+    return ids.length === 1 ? (businessUnits.find((b) => b.id === ids[0])?.name ?? "") : "All brands";
 };
 
 /** Page eyebrow for location-aware pages: the picked location, its business unit, or "All locations". */

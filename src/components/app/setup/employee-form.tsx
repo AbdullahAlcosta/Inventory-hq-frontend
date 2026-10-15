@@ -19,7 +19,7 @@ export const draftErrors = (d: EmployeeDraft, others: Employee[]) => {
     if (!d.name.trim()) errors.name = "Required";
     if (!EMAIL_RE.test(d.email.trim())) errors.email = "Enter a valid email";
     else if (others.some((e) => e.email.toLowerCase() === d.email.trim().toLowerCase())) errors.email = "This email already belongs to someone";
-    if (d.role !== "executive" && (d.businessUnitIds.length === 0 || d.locationIds.length === 0)) errors.assignment = "Pick at least one business unit and one location";
+    if (d.role !== "executive" && (d.businessUnitIds.length === 0 || d.locationIds.length === 0)) errors.assignment = "Pick at least one brand and one location";
     return errors;
 };
 
@@ -116,7 +116,7 @@ export const EmployeeForm = ({
                 {isExec ? (
                     <div className="flex items-center gap-3 rounded-xl bg-secondary px-4 py-3 text-sm text-secondary">
                         <Building07 className="size-5 text-fg-quaternary" />
-                        Company-wide — executives see every business unit and location.
+                        Company-wide — executives see every brand and location.
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Level">
@@ -148,18 +148,18 @@ export const EmployeeForm = ({
             {!isExec && (
                 <>
                     <ChipSelect
-                        label="Business units"
+                        label="Brands"
                         options={businessUnits.map((b) => ({ id: b.id, label: b.name, leading: <BusinessUnitAvatar unit={b} size="sm" className="!size-4 text-[9px]" /> }))}
                         value={draft.businessUnitIds}
                         onChange={(businessUnitIds) => set({ businessUnitIds })}
-                        emptyText="Add a business unit under Locations first."
+                        emptyText="Add a brand under Brands & Locations first."
                     />
                     <ChipSelect
                         label={draft.level === "warehouse" ? "Warehouses" : "Stores"}
                         options={locOptions.map((l) => ({ id: l.id, label: l.name, hint: l.code }))}
                         value={draft.locationIds}
                         onChange={(locationIds) => set({ locationIds })}
-                        emptyText={draft.businessUnitIds.length ? `No ${draft.level === "warehouse" ? "warehouses" : "stores"} in the chosen business units.` : "Pick a business unit first."}
+                        emptyText={draft.businessUnitIds.length ? `No ${draft.level === "warehouse" ? "warehouses" : "stores"} in the chosen brands.` : "Pick a brand first."}
                         hint={errors?.assignment && (draft.businessUnitIds.length > 0 || draft.locationIds.length > 0) ? <span className="text-error-primary">{errors.assignment}</span> : undefined}
                     />
                 </>
@@ -199,7 +199,7 @@ export const EmployeeForm = ({
                         </li>
                     ))}
                 </ul>
-                <p className="mt-3 border-t border-white/10 pt-3 text-xs text-white/60">A person's access always comes from their assignment (role + Business Unit + Location).</p>
+                <p className="mt-3 border-t border-white/10 pt-3 text-xs text-white/60">A person's access always comes from their assignment (role + Brand + Location).</p>
             </div>
         </div>
     );

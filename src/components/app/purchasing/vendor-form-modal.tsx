@@ -34,7 +34,7 @@ export const VendorFormModal = ({ isOpen, onOpenChange, vendor, onSaved }: { isO
     const set = <K extends keyof Omit<Vendor, "id">>(k: K, v: Omit<Vendor, "id">[K]) => setForm((f) => ({ ...f, [k]: v }));
     const errors = {
         name: !form.name.trim() ? "Vendor name is required." : undefined,
-        bus: form.businessUnitIds.length === 0 ? "Pick at least one business unit." : undefined,
+        bus: form.businessUnitIds.length === 0 ? "Pick at least one brand." : undefined,
         email: form.email && !/^\S+@\S+\.\S+$/.test(form.email) ? "Enter a valid email." : undefined,
     };
     const valid = !errors.name && !errors.bus && !errors.email;
@@ -80,7 +80,7 @@ export const VendorFormModal = ({ isOpen, onOpenChange, vendor, onSaved }: { isO
                 </div>
                 <Input label="Email" type="email" value={form.email} onChange={(v) => set("email", v)} isInvalid={touched && !!errors.email} hint={touched ? errors.email : undefined} />
                 <fieldset>
-                    <legend className="mb-2 text-sm font-medium text-secondary">Business units *</legend>
+                    <legend className="mb-2 text-sm font-medium text-secondary">Brands *</legend>
                     <div className="flex flex-col gap-2.5">
                         {choosable.map((bu) => (
                             <Checkbox

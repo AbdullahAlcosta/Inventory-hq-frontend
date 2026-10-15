@@ -106,7 +106,7 @@ export const AttributeFields = ({ draft, onChange, keys }: { draft: ProductDraft
             ))}
         </div>
     ) : (
-        <p className="text-sm text-tertiary">This business unit has no attribute keys.</p>
+        <p className="text-sm text-tertiary">This brand has no attribute keys.</p>
     );
 
 export const ComplianceFields = ({ draft, onChange }: { draft: ProductDraft; onChange: Patch }) => (

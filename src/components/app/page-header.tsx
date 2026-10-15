@@ -4,7 +4,7 @@ import { ChevronLeft } from "@untitledui/icons";
 import { cx } from "@/utils/cx";
 
 interface PageHeaderProps {
-    /** Small line above the title — usually the business unit or parent page. */
+    /** Small line above the title — usually the brand or parent page. */
     eyebrow?: ReactNode;
     title: ReactNode;
     description?: ReactNode;

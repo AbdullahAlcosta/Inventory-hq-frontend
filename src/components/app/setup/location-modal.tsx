@@ -18,12 +18,18 @@ export const LocationModal = ({
     businessUnits,
     location,
     defaultBusinessUnitId,
+    lockBusinessUnit,
+    onCreated,
 }: {
     isOpen: boolean;
     onOpenChange: (o: boolean) => void;
     businessUnits: BusinessUnit[];
     location?: Location | null;
     defaultBusinessUnitId?: string;
+    /** Hide the brand select (the brand comes from where the modal was opened). */
+    lockBusinessUnit?: boolean;
+    /** Called with the new location's id after it's added. */
+    onCreated?: (id: string) => void;
 }) => {
     const addLocation = useAppStore((s) => s.addLocation);
     const updateLocation = useAppStore((s) => s.updateLocation);
@@ -53,8 +59,11 @@ export const LocationModal = ({
             updateLocation(location.id, input);
             toast.success("Location updated", input.name);
         } else {
-            addLocation(input);
+            const id = addLocation(input);
             toast.success(`${type === "store" ? "Store" : "Warehouse"} added`, "Run an opening count before it starts selling or shipping.");
+            onOpenChange(false);
+            onCreated?.(id);
+            return;
         }
         onOpenChange(false);
     };
@@ -63,7 +72,7 @@ export const LocationModal = ({
         <ModalDialog
             isOpen={isOpen}
             onOpenChange={onOpenChange}
-            title={location ? "Edit location" : "Add location"}
+            title={location ? "Edit location" : lockBusinessUnit && buId ? `Add location to ${businessUnits.find((b) => b.id === buId)?.name ?? "brand"}` : "Add location"}
             description={location ? undefined : "New locations start empty. An opening count sets their starting stock."}
             footer={
                 <>
@@ -77,8 +86,9 @@ export const LocationModal = ({
             }
         >
             <div className="flex flex-col gap-5">
+                {!(lockBusinessUnit && buId) && (
                 <Select
-                    label="Business unit"
+                    label="Brand"
                     isRequired
                     items={businessUnits.map((b) => ({ id: b.id, label: b.name }))}
                     selectedKey={buId || null}
@@ -86,6 +96,7 @@ export const LocationModal = ({
                 >
                     {(item) => <Select.Item id={item.id}>{item.label}</Select.Item>}
                 </Select>
+                )}
                 <div>
                     <p className="mb-1.5 text-sm font-medium text-secondary">Type</p>
                     <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Type">

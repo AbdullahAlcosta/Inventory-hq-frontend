@@ -15,8 +15,23 @@ import { SyncSettingsFields } from "./sync-settings-fields";
 
 const channelTypes: ChannelType[] = ["quickvee", "shopify", "woocommerce"];
 
-export const ConnectChannelModal = ({ isOpen, onOpenChange, scope }: { isOpen: boolean; onOpenChange: (o: boolean) => void; scope: Scope }) => {
+export const ConnectChannelModal = ({
+    isOpen,
+    onOpenChange,
+    scope,
+    presetStoreId,
+    presetBusinessUnitId,
+}: {
+    isOpen: boolean;
+    onOpenChange: (o: boolean) => void;
+    scope: Scope;
+    /** Open for this store (Quickvee here; Shopify/WooCommerce fulfilled from it). Brand and store are then fixed. */
+    presetStoreId?: string;
+    /** Open for this brand (store picker limited to its stores; brand is fixed). */
+    presetBusinessUnitId?: string;
+}) => {
     const businessUnits = useAppStore((s) => s.businessUnits);
+    const allLocations = useAppStore((s) => s.locations);
     const addConnection = useAppStore((s) => s.addConnection);
 
     const [channel, setChannel] = useState<ChannelType>("quickvee");
@@ -29,20 +44,29 @@ export const ConnectChannelModal = ({ isOpen, onOpenChange, scope }: { isOpen: b
     const [name, setName] = useState("");
 
     const level = channelMeta[channel].level;
-    const bus = businessUnits.filter((b) => scope.activeBusinessUnitIds.includes(b.id));
-    const storesForBu = useMemo(() => scope.stores.filter((s) => !buId || s.businessUnitId === buId), [scope.stores, buId]);
+    const presetStore = presetStoreId ? allLocations.find((l) => l.id === presetStoreId) : undefined;
+    const presetBu = presetStore?.businessUnitId ?? presetBusinessUnitId;
+    const isPreset = !!presetBu;
+    // Setup can open this for any brand in the company, so don't narrow by the sidebar switcher then.
+    const scopeStores = useMemo(
+        () => (presetBu ? allLocations.filter((l) => l.type === "store" && l.businessUnitId === presetBu && (!presetStore || l.id === presetStore.id)) : scope.stores),
+        [presetBu, presetStore, allLocations, scope.stores],
+    );
+    const bus = businessUnits.filter((b) => (presetBu ? b.id === presetBu : scope.activeBusinessUnitIds.includes(b.id)));
+    const storesForBu = useMemo(() => scopeStores.filter((s) => !buId || s.businessUnitId === buId), [scopeStores, buId]);
 
     useEffect(() => {
         if (!isOpen) return;
         setChannel("quickvee");
-        setStoreId(scope.stores[0]?.id ?? null);
-        setBuId(scope.activeBusinessUnitIds[0] ?? null);
+        setStoreId(scopeStores[0]?.id ?? null);
+        setBuId(presetBu ?? scope.activeBusinessUnitIds[0] ?? null);
         setSyncMode("scheduled");
         setSchedule("Twice daily · 6:00 AM & 6:00 PM");
         setBuffer(1);
         setFlags([]);
         setName("");
-    }, [isOpen, scope]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, scope, presetBu]);
 
     // Sensible defaults per channel: slower channels get a bigger buffer.
     const pickChannel = (c: ChannelType) => {
@@ -55,11 +79,11 @@ export const ConnectChannelModal = ({ isOpen, onOpenChange, scope }: { isOpen: b
             setSyncMode(c === "shopify" ? "live" : "scheduled");
             setSchedule(c === "shopify" ? "Live" : "Every 30 minutes");
             setBuffer(c === "shopify" ? 2 : 4);
-            if (buId && !scope.stores.some((s) => s.id === storeId && s.businessUnitId === buId)) setStoreId(scope.stores.find((s) => s.businessUnitId === buId)?.id ?? null);
+            if (buId && !scopeStores.some((s) => s.id === storeId && s.businessUnitId === buId)) setStoreId(scopeStores.find((s) => s.businessUnitId === buId)?.id ?? null);
         }
     };
 
-    const store = scope.stores.find((s) => s.id === storeId);
+    const store = scopeStores.find((s) => s.id === storeId);
     const bu = businessUnits.find((b) => b.id === (level === "store" ? store?.businessUnitId : buId));
     const defaultName = level === "store" ? `${channelMeta[channel].label} · ${store?.name ?? ""}` : `${channelMeta[channel].label} · ${bu?.name ?? ""} Online`;
     const fulfillingOk = level === "store" ? !!store : !!buId && !!store && store.businessUnitId === buId;
@@ -117,18 +141,30 @@ export const ConnectChannelModal = ({ isOpen, onOpenChange, scope }: { isOpen: b
                                 <ChannelLogo channel={c} size="sm" />
                                 <span className="min-w-0">
                                     <span className="block text-sm font-semibold text-primary">{channelMeta[c].label}</span>
-                                    <span className="block text-xs text-tertiary">{channelMeta[c].level === "store" ? "Store level" : "Business unit level"}</span>
+                                    <span className="block text-xs text-tertiary">{channelMeta[c].level === "store" ? "Store level" : "Brand level"}</span>
                                 </span>
                             </button>
                         ))}
                     </div>
                 </div>
 
-                {level === "store" ? (
+                {isPreset && presetStore ? (
+                    <div className="rounded-xl bg-secondary px-4 py-3 text-sm text-secondary">
+                        {level === "store" ? (
+                            <>
+                                Connects <b>{presetStore.name}</b> and sells its stock.
+                            </>
+                        ) : (
+                            <>
+                                One online store for <b>{bu?.name}</b>, fulfilled from <b>{presetStore.name}</b>.
+                            </>
+                        )}
+                    </div>
+                ) : level === "store" ? (
                     <Select
                         label="Store"
                         hint="Quickvee connects one store at a time and sells that store's stock."
-                        items={scope.stores.map((s) => ({ id: s.id, label: s.name }))}
+                        items={scopeStores.map((s) => ({ id: s.id, label: s.name }))}
                         selectedKey={storeId}
                         onSelectionChange={(k) => setStoreId(k as string)}
                         placeholder="Pick a store"
@@ -138,12 +174,13 @@ export const ConnectChannelModal = ({ isOpen, onOpenChange, scope }: { isOpen: b
                 ) : (
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <Select
-                            label="Business unit"
+                            label="Brand"
+                            isDisabled={isPreset}
                             items={bus.map((b) => ({ id: b.id, label: b.name }))}
                             selectedKey={buId}
                             onSelectionChange={(k) => {
                                 setBuId(k as string);
-                                setStoreId(scope.stores.find((s) => s.businessUnitId === k)?.id ?? null);
+                                setStoreId(scopeStores.find((s) => s.businessUnitId === k)?.id ?? null);
                             }}
                         >
                             {(item) => <Select.Item id={item.id}>{item.label}</Select.Item>}
@@ -154,7 +191,7 @@ export const ConnectChannelModal = ({ isOpen, onOpenChange, scope }: { isOpen: b
                             items={storesForBu.map((s) => ({ id: s.id, label: s.name }))}
                             selectedKey={storeId}
                             onSelectionChange={(k) => setStoreId(k as string)}
-                            placeholder={storesForBu.length ? "Pick a store" : "No stores in this unit"}
+                            placeholder={storesForBu.length ? "Pick a store" : "No stores in this brand"}
                         >
                             {(item) => <Select.Item id={item.id}>{item.label}</Select.Item>}
                         </Select>

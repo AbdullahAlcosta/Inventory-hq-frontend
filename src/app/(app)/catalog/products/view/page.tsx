@@ -85,7 +85,7 @@ function ProductDetail() {
                 <Card>
                     <Empty
                         icon={Package}
-                        title="This product doesn't exist or isn't in your business units"
+                        title="This product doesn't exist or isn't in your brands"
                         action={<Button href="/catalog/products">Back to products</Button>}
                     />
                 </Card>
@@ -335,7 +335,7 @@ const VariantsTab = ({
                     <Table.Head label="Price" />
                     <Table.Head label="Cost" />
                     <Table.Head label="Margin" />
-                    <Table.Head label="Reorder pt" />
+                    <Table.Head label="Min qty" />
                     <Table.Head label="Restock" />
                     <Table.Head label="Lead time" />
                     <Table.Head label="Vendor" />
@@ -405,7 +405,7 @@ const StockTab = ({ product, variants, scope, highlight }: { product: Product; v
     const locations = scope.locations.filter((l) => l.businessUnitId === product.businessUnitId);
     const [loc, setLoc] = useState<string>("all");
 
-    // Company-wide view: Available at every store and warehouse in the business unit, with request buttons for store staff.
+    // Company-wide view: Available at every store and warehouse in the brand, with request buttons for store staff.
     const everywhere = (
         <ProductStockCard
             title="Available at every location"
@@ -541,7 +541,7 @@ const ChannelsTab = ({ product, variants, scope }: { product: Product; variants:
             <Card>
                 <Empty
                     icon={LinkExternal01}
-                    title="No sales channels for this business unit"
+                    title="No sales channels for this brand"
                     description="Connect Quickvee, Shopify or WooCommerce in Sales Channels."
                 />
             </Card>
@@ -564,7 +564,7 @@ const ChannelsTab = ({ product, variants, scope }: { product: Product; variants:
                                 <StatusBadge status={c.status} size="sm" />
                             </span>
                         }
-                        description={`${channelNames[c.channel]} · ${c.level === "store" ? "Store level" : "Business unit level"} · ${c.syncMode === "live" ? "Live sync" : c.schedule} · Buffer ${c.safetyBuffer}`}
+                        description={`${channelNames[c.channel]} · ${c.level === "store" ? "Store level" : "Brand level"} · ${c.syncMode === "live" ? "Live sync" : c.schedule} · Buffer ${c.safetyBuffer}`}
                         actions={
                             <Button color="secondary" size="sm" iconTrailing={LinkExternal01} href={`/channels/connections/view?id=${c.id}`}>
                                 Open connection
@@ -624,7 +624,7 @@ const AllocationTab = ({ product, variants }: { product: Product; variants: Vari
     if (!stores.length)
         return (
             <Card>
-                <Empty title="No channels sell this product yet" description="Connect a sales channel to a store in this business unit first." />
+                <Empty title="No channels sell this product yet" description="Connect a sales channel to a store in this brand first." />
             </Card>
         );
     return (

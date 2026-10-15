@@ -51,7 +51,7 @@ function NewStoreRequest() {
     // Gated to a store by the app shell.
     const store = scope.activeLocation!;
 
-    // Where stock can come from: the business unit's warehouse first, then the other stores in the same business unit.
+    // Where stock can come from: the brand's warehouse first, then the other stores in the same brand.
     const sources = useMemo(
         () =>
             locations
@@ -123,7 +123,7 @@ function NewStoreRequest() {
                 description={`${lines.length ? "Available units of the items below at each location." : "Add items below to see what each location has."} Requests to another store need the warehouse manager’s approval first.`}
             >
                 {sources.length === 0 ? (
-                    <p className="text-sm text-tertiary">There is no warehouse or other store in this business unit to request from.</p>
+                    <p className="text-sm text-tertiary">There is no warehouse or other store in this brand to request from.</p>
                 ) : (
                     <AriaRadioGroup aria-label="Get stock from" value={sourceId} onChange={setSourceId} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {sources.map((s) => {

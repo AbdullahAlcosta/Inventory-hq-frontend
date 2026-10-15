@@ -146,10 +146,10 @@ function Products() {
                     />
                     {activeBus.length > 1 && (
                         <Select
-                            aria-label="Business unit"
+                            aria-label="Brand"
                             size="sm"
                             className="sm:w-44"
-                            items={[{ id: "all", label: "All business units" }, ...activeBus.map((b) => ({ id: b.id, label: b.name }))]}
+                            items={[{ id: "all", label: "All brands" }, ...activeBus.map((b) => ({ id: b.id, label: b.name }))]}
                             selectedKey={buFilter}
                             onSelectionChange={(k: Key | null) => {
                                 setBuFilter(String(k ?? "all"));
@@ -196,7 +196,7 @@ function Products() {
                     <Table aria-label="Products" size="sm" onRowAction={(key) => router.push(`/catalog/products/view?id=${key}`)}>
                         <Table.Header>
                             <Table.Head label="Product" isRowHeader />
-                            <Table.Head label="Business unit" />
+                            <Table.Head label="Brand" />
                             <Table.Head label="Variants" />
                             <Table.Head label="Price" />
                             <Table.Head

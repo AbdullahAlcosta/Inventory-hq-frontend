@@ -46,7 +46,7 @@ function VendorDetailPage() {
             <div>
                 <PageHeader backHref="/purchasing/vendors" backLabel="Vendors" title="Vendor not found" />
                 <Card>
-                    <Empty title="This vendor doesn’t exist or isn’t in your business units." />
+                    <Empty title="This vendor doesn’t exist or isn’t in your brands." />
                 </Card>
             </div>
         );
@@ -80,7 +80,7 @@ function VendorDetailPage() {
                     <ContactField icon={Mail01} label="Email" value={vendor.email} href={vendor.email ? `mailto:${vendor.email}` : undefined} />
                     <ContactField icon={Phone} label="Phone" value={vendor.phone} href={vendor.phone ? `tel:${vendor.phone}` : undefined} />
                     <div>
-                        <dt className="text-sm text-tertiary">Business units</dt>
+                        <dt className="text-sm text-tertiary">Brands</dt>
                         <dd className="mt-1 flex flex-wrap gap-1.5">
                             {vendor.businessUnitIds.map((b) => {
                                 const bu = businessUnits.find((x) => x.id === b);
@@ -112,7 +112,7 @@ function VendorDetailPage() {
                             <Table.Head label="Item" isRowHeader />
                             <Table.Head label="Unit" />
                             <Table.Head label="Cost" />
-                            <Table.Head label="Reorder point" />
+                            <Table.Head label="Min qty" />
                             <Table.Head label="Lead time" />
                         </Table.Header>
                         <Table.Body items={supplied}>

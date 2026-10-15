@@ -86,7 +86,7 @@ export const RequestList = ({ requests, empty, side }: { requests: StoreRequest[
     );
 
 /**
- * Pending approvals the user can decide, within the active business units (and, optionally, only at some locations;
+ * Pending approvals the user can decide, within the active brands (and, optionally, only at some locations;
  * `includeUnlocated` also keeps business-unit-wide items such as import duplicates).
  */
 export const usePendingApprovals = (scope: Scope, locationIds?: string[], includeUnlocated = false) => {
@@ -142,7 +142,7 @@ export interface LocationMetrics {
     available: number;
     /** On hand (all states) at cost. */
     value: number;
-    /** Variants of this location's business unit at or below their reorder point. */
+    /** Variants of this location's brand at or below their reorder point. */
     low: number;
     /** Requests this store made that aren't confirmed yet. */
     requestsIn: StoreRequest[];

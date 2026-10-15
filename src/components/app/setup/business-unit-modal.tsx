@@ -22,8 +22,21 @@ const swatch: Record<BusinessUnit["color"], string> = {
     gray: "bg-gray-600",
 };
 
-/** Add or edit a Business Unit. Pass `unit` to edit. */
-export const BusinessUnitModal = ({ isOpen, onOpenChange, companyId, unit }: { isOpen: boolean; onOpenChange: (o: boolean) => void; companyId: string; unit?: BusinessUnit | null }) => {
+/** Add or edit a Brand. Pass `unit` to edit. */
+export const BusinessUnitModal = ({
+    isOpen,
+    onOpenChange,
+    companyId,
+    unit,
+    onCreated,
+}: {
+    isOpen: boolean;
+    onOpenChange: (o: boolean) => void;
+    companyId: string;
+    unit?: BusinessUnit | null;
+    /** Called with the new brand's id after it's added. */
+    onCreated?: (id: string) => void;
+}) => {
     const addBusinessUnit = useAppStore((s) => s.addBusinessUnit);
     const updateBusinessUnit = useAppStore((s) => s.updateBusinessUnit);
     const [name, setName] = useState("");
@@ -42,10 +55,13 @@ export const BusinessUnitModal = ({ isOpen, onOpenChange, companyId, unit }: { i
         if (!clean) return;
         if (unit) {
             updateBusinessUnit(unit.id, { name: clean, color, attributeKeys: keys });
-            toast.success("Business unit updated", clean);
+            toast.success("Brand updated", clean);
         } else {
-            addBusinessUnit({ companyId, name: clean, color, attributeKeys: keys });
-            toast.success("Business unit added", "Next, add its stores and warehouses.");
+            const id = addBusinessUnit({ companyId, name: clean, color, attributeKeys: keys });
+            toast.success("Brand added", "Next, add its stores and warehouses.");
+            onOpenChange(false);
+            onCreated?.(id);
+            return;
         }
         onOpenChange(false);
     };
@@ -54,15 +70,15 @@ export const BusinessUnitModal = ({ isOpen, onOpenChange, companyId, unit }: { i
         <ModalDialog
             isOpen={isOpen}
             onOpenChange={onOpenChange}
-            title={unit ? "Edit business unit" : "Add business unit"}
-            description="A business unit is a brand or line of business with its own stores, warehouses and products."
+            title={unit ? "Edit brand" : "Add brand"}
+            description="A brand is a line of business with its own stores, warehouses and products."
             footer={
                 <>
                     <Button color="secondary" size="lg" onPress={() => onOpenChange(false)}>
                         Cancel
                     </Button>
                     <Button color="primary" size="lg" isDisabled={!name.trim()} onPress={save}>
-                        {unit ? "Save changes" : "Add business unit"}
+                        {unit ? "Save changes" : "Add brand"}
                     </Button>
                 </>
             }
@@ -97,7 +113,7 @@ export const BusinessUnitModal = ({ isOpen, onOpenChange, companyId, unit }: { i
                 <InputTags
                     label="Attribute keys"
                     placeholder="Type a key and press Enter"
-                    hint="Attributes products in this business unit carry, e.g. Flavor, Nicotine Strength, Size, Color."
+                    hint="Attributes products in this brand carry, e.g. Flavor, Nicotine Strength, Size, Color."
                     value={keys}
                     onChange={setKeys}
                 />

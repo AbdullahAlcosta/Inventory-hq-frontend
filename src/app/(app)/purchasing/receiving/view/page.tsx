@@ -72,13 +72,13 @@ function ReceivePOPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [po?.id, po?.lines.length, variants, products]);
 
-    // Staff of this PO's warehouse, plus executives.
-    if (!po || !(scope.isExecutive || (scope.canSeePurchasing && scope.locationIds.includes(po.warehouseId)))) {
+    // Staff of this PO’s destination (warehouse or store), plus executives.
+    if (!po || !(scope.isExecutive || (scope.canReceive && scope.locationIds.includes(po.warehouseId)))) {
         return (
             <div>
                 <PageHeader backHref="/purchasing/receiving" backLabel="Receiving" title="Purchase order not found" />
                 <Card>
-                    <Empty title="This PO doesn’t exist or isn’t for one of your warehouses." />
+                    <Empty title="This PO doesn’t exist or isn’t delivered to one of your locations." />
                 </Card>
             </div>
         );
@@ -158,7 +158,7 @@ function ReceivePOPage() {
                             {notSent
                                 ? "A manager needs to mark this PO as sent before it can be received."
                                 : complete
-                                  ? `All ${formatNumber(totals.units)} units are now Available at the warehouse.`
+                                  ? `All ${formatNumber(totals.units)} units are now Available here.`
                                   : `${formatNumber(totals.received)} of ${formatNumber(totals.units)} units received. The PO is Partial and a manager will resolve the shortage in Approvals.`}
                         </p>
                         <div className="mt-3">

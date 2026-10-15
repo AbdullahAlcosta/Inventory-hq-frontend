@@ -12,7 +12,7 @@ export interface ChipOption {
     leading?: ReactNode;
 }
 
-/** Multi-select as toggleable chips — used for business units and locations. */
+/** Multi-select as toggleable chips — used for brands and locations. */
 export const ChipSelect = ({
     label,
     hint,

@@ -264,11 +264,11 @@ const csvCell = (v: string | number) => {
 };
 
 export const reportCsv = (report: ReportData, periodLabel: string, companyName: string) => {
-    const header = ["Level", "Business Unit", "Location", "Type", "Sales", "Cost", "Gross margin", "Margin %", "Units sold", "Inventory at cost", "Inventory at retail", "Available at cost"];
+    const header = ["Level", "Brand", "Location", "Type", "Sales", "Cost", "Gross margin", "Margin %", "Units sold", "Inventory at cost", "Inventory at retail", "Available at cost"];
     const rows: (string | number)[][] = [header];
     rows.push(["Company", companyName, "", "", report.total.sales, report.total.cost, report.total.margin, report.total.marginPct, report.total.units, report.inventory.costAll, report.inventory.retailAll, report.inventory.costAvailable]);
     report.byBusinessUnit.forEach((b) =>
-        rows.push(["Business Unit", b.businessUnit.name, "", "", b.sales, b.cost, b.margin, b.marginPct, b.units, b.inventory.costAll, b.inventory.retailAll, b.inventory.costAvailable]),
+        rows.push(["Brand", b.businessUnit.name, "", "", b.sales, b.cost, b.margin, b.marginPct, b.units, b.inventory.costAll, b.inventory.retailAll, b.inventory.costAvailable]),
     );
     report.byLocation.forEach((l) => {
         const store = l.location.type === "store";

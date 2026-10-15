@@ -122,7 +122,7 @@ function ConnectionDetailPage() {
             <>
                 <PageHeader backHref="/channels/connections" backLabel="Connections" title="Connection not found" />
                 <div className="rounded-2xl bg-primary ring-1 ring-secondary">
-                    <Empty title="Not available" description="This connection doesn't exist or isn't in your business units." />
+                    <Empty title="Not available" description="This connection doesn't exist or isn't in your brands." />
                 </div>
             </>
         );
@@ -231,7 +231,7 @@ function ConnectionDetailPage() {
                             </div>
                         )}
                         {rows.length === 0 ? (
-                            <Empty title="No products" description="Nothing in this business unit matches." />
+                            <Empty title="No products" description="Nothing in this brand matches." />
                         ) : (
                             <Table aria-label="Products for this connection" size="sm" selectionMode="multiple" selectionBehavior="toggle" selectedKeys={selected} onSelectionChange={setSelected}>
                                 <Table.Header>

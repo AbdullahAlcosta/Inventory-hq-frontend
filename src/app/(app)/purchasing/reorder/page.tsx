@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle, Eye, InfoCircle, Settings01, SearchLg } from "@untitledui/icons";
 import { type ReorderStatus, formatDays, reorderInfo, reorderStatusMeta } from "@/components/app/approvals/approval-meta";
 import { ReorderSettingsModal } from "@/components/app/approvals/reorder-settings-modal";
+import { AutoReorderPanel } from "@/components/app/purchasing/auto-reorder-panel";
+import { forecastOrder, unitsOnOrder } from "@/lib/forecast";
 import { Empty } from "@/components/app/empty";
 import { FilterPills } from "@/components/app/filter-pills";
 import { LocationName, VariantCell } from "@/components/app/item-cell";
@@ -31,6 +33,7 @@ export default function ReorderPage() {
     const vendors = useAppStore((s) => s.vendors);
     const approvals = useAppStore((s) => s.approvals);
     const businessUnits = useAppStore((s) => s.businessUnits);
+    const purchaseOrders = useAppStore((s) => s.purchaseOrders);
 
     const [filter, setFilter] = useState<Filter>("reorder");
     const [query, setQuery] = useState("");
@@ -49,6 +52,7 @@ export default function ReorderPage() {
                 if (!warehouse) return [];
                 const available = stockAt({ stockLevels }, v.id, warehouse.id).available;
                 const info = reorderInfo(v, available);
+                const forecast = forecastOrder(v, product, available, unitsOnOrder(purchaseOrders, v.id, warehouse.id, product.uom.unitsPerPurchaseUnit));
                 const approval = pendingByVariant.get(v.id);
                 return [
                     {
@@ -58,6 +62,7 @@ export default function ReorderPage() {
                         warehouse,
                         available,
                         ...info,
+                        forecast,
                         vendor: vendors.find((x) => x.id === v.vendorId),
                         approval,
                         canReview: approval ? canDecideApproval(scope.user, approval, { businessUnitIds: scope.businessUnitIds, locationIds: scope.locationIds }) : false,
@@ -66,7 +71,7 @@ export default function ReorderPage() {
                 ];
             })
             .sort((a, b) => rank[a.status] - rank[b.status] || a.cover - b.cover);
-    }, [variants, products, locations, stockLevels, vendors, approvals, scope]);
+    }, [variants, products, locations, stockLevels, vendors, approvals, purchaseOrders, scope]);
 
     const counts = { reorder: 0, watch: 0, ok: 0 };
     rows.forEach((r) => counts[r.status]++);
@@ -82,23 +87,34 @@ export default function ReorderPage() {
             <PageHeader
                 eyebrow={eyebrow}
                 title="Reorder"
-                description="Warehouse stock against each item’s reorder point, sales speed and vendor lead time."
+                description="Warehouse stock against each item’s minimum qty, sales-speed forecast and vendor lead time."
                 actions={
-                    <Button href="/approvals?type=reorder" color="secondary" size="md">
-                        Open suggestions in Approvals
-                    </Button>
+                    scope.autoPO === "suggest" && (
+                        <Button href="/approvals?type=reorder" color="secondary" size="md">
+                            Open suggestions in Approvals
+                        </Button>
+                    )
                 }
             />
 
             <div className="mb-5 flex items-start gap-3 rounded-2xl bg-primary p-4 text-sm shadow-xs ring-1 ring-secondary">
                 <InfoCircle className="mt-0.5 size-5 shrink-0 text-fg-quaternary" />
                 <p className="text-secondary">
-                    <span className="font-semibold text-primary">Suggestions land in Approvals. Nothing is ordered automatically.</span> Approving a suggestion creates a purchase order — one per vendor.
+                    {scope.autoPO === "off" ? (
+                        <><span className="font-semibold text-primary">Automatic reorders are off.</span> Status is shown below; create POs by hand. Change it in Company settings.</>
+                    ) : scope.autoPO === "auto_draft" ? (
+                        <><span className="font-semibold text-primary">Draft POs are created automatically.</span> Nothing is sent to a vendor until someone reviews the draft and marks it sent.</>
+                    ) : (
+                        <><span className="font-semibold text-primary">Suggestions land in Approvals. Nothing is ordered automatically.</span> Approving a suggestion creates a purchase order — one per vendor.</>
+                    )}{" "}
+                    Order qty = sales/day × (lead time + cover days) + minimum qty − available − already on open POs, rounded up to whole cases.
                 </p>
             </div>
 
+            {scope.canManagePurchasing && <AutoReorderPanel scope={scope} />}
+
             <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <StatCard label="Reorder now" value={formatNumber(counts.reorder)} hint="At/below reorder point or runs out within lead time" icon={AlertTriangle} tone="error" />
+                <StatCard label="Reorder now" value={formatNumber(counts.reorder)} hint="At/below minimum qty or runs out within lead time" icon={AlertTriangle} tone="error" />
                 <StatCard label="Watch" value={formatNumber(counts.watch)} hint="Runs out within lead time + 7 days" icon={Eye} tone="warning" />
                 <StatCard label="Pending suggestions" value={formatNumber(pendingSuggestions)} hint="Waiting for a decision" icon={CheckCircle} href="/approvals?type=reorder" />
             </div>
@@ -126,8 +142,8 @@ export default function ReorderPage() {
                             <Table.Head label="Item" isRowHeader />
                             <Table.Head label="Status" />
                             <Table.Head label="Available" />
-                            <Table.Head label="Reorder pt" />
-                            <Table.Head label="Restock" />
+                            <Table.Head label="Min qty" />
+                            <Table.Head label="Forecast order" />
                             <Table.Head label="Sales / day" />
                             <Table.Head label="Cover · runs out" />
                             <Table.Head label="Lead time" />
@@ -152,7 +168,18 @@ export default function ReorderPage() {
                                         {formatNumber(r.available)}
                                     </Table.Cell>
                                     <Table.Cell className="tabular-nums">{formatNumber(r.variant.reorderPoint)}</Table.Cell>
-                                    <Table.Cell className="tabular-nums">{formatNumber(r.variant.restockQty)}</Table.Cell>
+                                    <Table.Cell className="whitespace-nowrap tabular-nums" title={r.forecast.reason}>
+                                        {r.forecast.cases ? (
+                                            <>
+                                                <span className="font-medium text-primary">
+                                                    {r.forecast.cases} × {r.product.uom.purchaseUnit.toLowerCase()}
+                                                </span>
+                                                <span className="block text-xs">{formatNumber(r.forecast.units)} units</span>
+                                            </>
+                                        ) : (
+                                            "—"
+                                        )}
+                                    </Table.Cell>
                                     <Table.Cell>
                                         <div className="flex items-center gap-2">
                                             <span className="w-8 tabular-nums">{r.variant.dailySales.toFixed(1)}</span>
@@ -169,7 +196,7 @@ export default function ReorderPage() {
                                     <Table.Cell className="min-w-36">{r.vendor?.name ?? <span className="text-error-primary">None</span>}</Table.Cell>
                                     <Table.Cell>
                                         <div className="flex items-center justify-end gap-2">
-                                            {r.approval &&
+                                            {r.approval && scope.autoPO !== "off" &&
                                                 (r.canReview ? (
                                                     <Button size="sm" href={`/approvals?type=reorder&id=${r.approval.id}`}>
                                                         Review in Approvals

@@ -68,7 +68,7 @@ export const VariantFields = ({ draft, onChange, vendors, suggestedSku, purchase
             />
             <Input size="sm" label="Price" placeholder="0.00" value={draft.price} onChange={(v) => onChange({ price: money(v) })} inputMode="decimal" />
             <Input size="sm" label="Cost" placeholder="0.00" value={draft.cost} onChange={(v) => onChange({ cost: money(v) })} inputMode="decimal" />
-            <Input size="sm" label="Reorder point" value={draft.reorderPoint} onChange={(v) => onChange({ reorderPoint: whole(v) })} inputMode="numeric" />
+            <Input size="sm" label="Minimum qty" value={draft.reorderPoint} onChange={(v) => onChange({ reorderPoint: whole(v) })} inputMode="numeric" />
             <Input size="sm" label="Restock qty" value={draft.restockQty} onChange={(v) => onChange({ restockQty: whole(v) })} inputMode="numeric" />
             <Input size="sm" label="Lead time (days)" value={draft.leadTimeDays} onChange={(v) => onChange({ leadTimeDays: whole(v) })} inputMode="numeric" />
             <Select

@@ -3,6 +3,7 @@
 import { Card } from "@/components/app/card";
 import { PageHeader } from "@/components/app/page-header";
 import { toast } from "@/components/app/toast";
+import { RadioButton, RadioGroup } from "@/components/base/radio-buttons/radio-buttons";
 import { Toggle } from "@/components/base/toggle/toggle";
 import { useRequiredScope } from "@/hooks/use-session";
 import { useAppStore } from "@/store/app-store";
@@ -58,6 +59,38 @@ export default function CompanySettingsPage() {
                     />
                 </div>
             </Card>
+            <div className="mt-6">
+                <Card title="Purchasing">
+                    <p className="text-md font-semibold text-primary">Automatic reorders</p>
+                    <p className="mt-1 max-w-2xl text-sm text-tertiary">
+                        For warehouse items at or below their minimum qty. Quantities come from the sales-speed forecast: sales/day × (lead time + cover days) +
+                        minimum qty − available − already on open POs, rounded up to whole cases. Stores restock from their warehouse.
+                    </p>
+                    <RadioGroup
+                        aria-label="Automatic reorders"
+                        className="mt-4"
+                        size="md"
+                        isDisabled={!scope.isExecutive}
+                        value={company?.settings?.autoPO ?? "suggest"}
+                        onChange={(v) => {
+                            const mode = v as "off" | "suggest" | "auto_draft";
+                            updateCompanySettings(scope.companyId, { autoPO: mode });
+                            toast.success(
+                                { off: "Automatic reorders are off", suggest: "Reorders will be suggested", auto_draft: "Draft POs will be created automatically" }[mode],
+                                { off: "The Reorder page still shows stock status.", suggest: "Suggestions land in Approvals.", auto_draft: "Run it now from Purchasing → Reorder, or it runs when a manager signs in." }[mode],
+                            );
+                        }}
+                    >
+                        <RadioButton value="off" label="Off" hint="Show reorder status only. Nobody gets suggestions; POs are created by hand." />
+                        <RadioButton value="suggest" label="Suggest in Approvals (default)" hint="Items below minimum become reorder suggestions. Approving one creates a PO." />
+                        <RadioButton
+                            value="auto_draft"
+                            label="Create draft POs automatically"
+                            hint="One draft PO per vendor and warehouse. Drafts are never sent — a person reviews each one and marks it sent."
+                        />
+                    </RadioGroup>
+                </Card>
+            </div>
         </>
     );
 }

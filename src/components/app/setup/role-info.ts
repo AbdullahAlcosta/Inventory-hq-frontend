@@ -24,9 +24,9 @@ export const levelLabel = (level: Employee["level"]) => (level === "company" ? "
 export const capabilitiesFor = (role: Role, level: Employee["level"], locationNames: string[], buNames: string[]): string[] => {
     if (role === "executive") {
         return [
-            "Sees every business unit, store and warehouse in this company",
+            "Sees every brand, store and warehouse in this company",
             "Decides every approval",
-            "Adds and edits employees, business units and locations",
+            "Adds and edits employees, brands and locations",
             "Gets the monthly executive report",
         ];
     }

@@ -49,7 +49,7 @@ export default function VendorsPage() {
             <PageHeader
                 eyebrow={buName}
                 title="Vendors"
-                description="Who you buy from. Each vendor supplies one or more business units."
+                description="Who you buy from. Each vendor supplies one or more brands."
                 actions={
                     scope.canManagePurchasing && (
                         <Button iconLeading={Plus} size="lg" onPress={() => setAdding(true)}>
@@ -73,7 +73,7 @@ export default function VendorsPage() {
                         <Table.Header>
                             <Table.Head label="Vendor" isRowHeader />
                             <Table.Head label="Contact" />
-                            <Table.Head label="Business units" />
+                            <Table.Head label="Brands" />
                             <Table.Head label="Products" />
                             <Table.Head label="Open POs" />
                             <Table.Head label="Last PO" />

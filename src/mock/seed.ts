@@ -26,6 +26,7 @@ import type {
     Variant,
     Vendor,
 } from "@/lib/types";
+import { forecastOrder, unitsOnOrder } from "@/lib/forecast";
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -582,18 +583,18 @@ variants.forEach((v) => {
     const warehouse = locations.find((l) => l.businessUnitId === product.businessUnitId && l.type === "warehouse");
     if (!warehouse) return;
     const stock = stockOf(v.id, warehouse.id);
-    const daysLeft = v.dailySales > 0 ? stock / v.dailySales : Infinity;
-    if (stock <= v.reorderPoint || daysLeft <= v.leadTimeDays) {
-        const runOut = new Date(Date.now() + Math.max(0, daysLeft) * DAY).toISOString();
+    const fc = forecastOrder(v, product, stock, unitsOnOrder(purchaseOrders, v.id, warehouse.id, product.uom.unitsPerPurchaseUnit));
+    if (fc.needsOrder) {
+        const runOut = fc.runOutDate ?? new Date(Date.now() + 365 * DAY).toISOString();
         approvals.push({
             id: `ap_ro_${v.id}`,
             type: "reorder",
             title: `Reorder ${productName(v.id)}`,
-            summary: `${stock} on hand at ${warehouse.name}; reorder point is ${v.reorderPoint}.`,
+            summary: `${stock} on hand at ${warehouse.name}; minimum qty is ${v.reorderPoint}.`,
             businessUnitId: product.businessUnitId,
             locationId: warehouse.id,
             status: "pending",
-            payload: { type: "reorder", variantId: v.id, vendorId: v.vendorId, warehouseId: warehouse.id, currentStock: stock, dailySales: v.dailySales, runOutDate: runOut, suggestedQty: v.restockQty },
+            payload: { type: "reorder", variantId: v.id, vendorId: v.vendorId, warehouseId: warehouse.id, currentStock: stock, dailySales: v.dailySales, runOutDate: runOut, suggestedQty: fc.units },
             createdAt: daysAgo(randInt(0, 2), 5),
         });
     }
@@ -723,3 +724,131 @@ export const activity: ActivityEntry[] = [
     { id: "ac_9", kind: "count", message: "Cycle count CC-0305 approved — Smoke Shops Warehouse corrected by −2", by: "e_mgr_wh", at: daysAgo(8, 14), locationId: "wh_smoke", quantity: -2, reason: "cycle count" },
     { id: "ac_10", kind: "adjustment", message: "ADJ-0089 approved: +6 Pokémon TCG Booster Pack — Surging Sparks (found)", by: "e_exec", at: daysAgo(7, 12), locationId: "st_poke", variantId: "p_pack_v1", quantity: 6, reason: "found" },
 ];
+
+/* ------------------------------------------------------------------ */
+/* Cigarettes + Bargain Line Wholesale (vendor invoice reconciliation) */
+/* ------------------------------------------------------------------ */
+// Added after everything else (and without the random generator) so earlier demo numbers stay the same.
+// Carton UPCs are the real "Item Lookup Codes" printed on Bargain Line's sales receipt (see src/mock/invoices.ts).
+
+vendors.push({
+    id: "v_bargain",
+    name: "Bargain Line Wholesale",
+    contactName: "Sales desk",
+    email: "orders@bargainline.example",
+    phone: "(510) 261-7500",
+    businessUnitIds: ["bu_smoke"],
+    notes: "701 Kennedy St, Oakland, CA. Account #6623. Cigarettes & tobacco; sales receipt per delivery.",
+});
+
+const cigSpecs: { id: string; brand: string; line: string; color: string; variants: { name: string; upc: string; carton: number; price: number; daily: number }[] }[] = [
+    {
+        id: "p_marlboro", brand: "Marlboro", line: "Cigarettes", color: "#b91c1c",
+        variants: [
+            { name: "Gold Box", upc: "028200138408", carton: 111.39, price: 13.49, daily: 3 },
+            { name: "Red Box", upc: "028200135704", carton: 111.39, price: 13.49, daily: 3.5 },
+            { name: "72's Red Box", upc: "028200196309", carton: 111.39, price: 13.49, daily: 0.8 },
+        ],
+    },
+    {
+        id: "p_camelbs", brand: "Camel", line: "Black Series", color: "#1f2937",
+        variants: [
+            { name: "Blue Box", upc: "012300030717", carton: 116.82, price: 13.99, daily: 1.2 },
+            { name: "Gold Box", upc: "012300010542", carton: 116.47, price: 13.99, daily: 1 },
+        ],
+    },
+    {
+        id: "p_newportnm", brand: "Newport", line: "Non-Menthol", color: "#0f766e",
+        variants: [
+            { name: "Gold Box", upc: "026100806601", carton: 112.2, price: 13.49, daily: 1.1 },
+            { name: "Gold 100s Box", upc: "026100806618", carton: 112.2, price: 13.49, daily: 0.9 },
+        ],
+    },
+    {
+        id: "p_newportm", brand: "Newport", line: "Menthol", color: "#059669",
+        variants: [{ name: "Kings Box", upc: "026100005103", carton: 112.2, price: 13.49, daily: 2.5 }],
+    },
+    {
+        id: "p_lucky", brand: "Lucky Strike", line: "Cigarettes", color: "#dc2626",
+        // Catalog/PO cost is last month's price; the receipt bills 90.19.
+        variants: [
+            { name: "Gold Box", upc: "043300109004", carton: 88.5, price: 11.49, daily: 0.7 },
+            { name: "Red Box", upc: "043300109189", carton: 90.19, price: 11.49, daily: 0.9 },
+        ],
+    },
+    {
+        id: "p_amspirit", brand: "American Spirit", line: "Cigarettes", color: "#2563eb",
+        variants: [{ name: "Full Bodied Blue Box", upc: "047995855185", carton: 122.2, price: 14.99, daily: 0.8 }],
+    },
+    {
+        id: "p_capri", brand: "Capri", line: "120s", color: "#c026d3",
+        variants: [{ name: "Magenta Box", upc: "027200011162", carton: 157.5, price: 17.99, daily: 0.4 }],
+    },
+];
+
+cigSpecs.forEach((spec, pi) => {
+    products.push({
+        id: spec.id,
+        businessUnitId: "bu_smoke",
+        brand: spec.brand,
+        productLine: spec.line,
+        productType: "Cigarettes",
+        name: `${spec.brand} ${spec.line}`,
+        description: "Carton of 10 packs, 20 cigarettes per pack.",
+        attributes: { Brand: spec.brand, "Product Type": "Cigarettes" },
+        complianceFlags: ["tobacco", "age_21"],
+        uom: { purchaseUnit: "Carton", sellingUnit: "Pack", unitsPerPurchaseUnit: 10 },
+        status: "active",
+        createdAt: new Date(Date.now() - (120 - pi) * DAY).toISOString(),
+        imageColor: spec.color,
+    });
+    spec.variants.forEach((v, vi) => {
+        const id = `${spec.id}_v${vi + 1}`;
+        variants.push({
+            id,
+            productId: spec.id,
+            name: v.name,
+            sku: `${skuCode(spec.brand)}-${skuCode(spec.line)}-${skuCode(v.name) || "STD"}`,
+            // The carton UPC is the purchase-unit barcode (scanning it receives 10 packs).
+            barcodes: [{ code: v.upc, unit: "purchase" }],
+            price: v.price,
+            cost: Math.round((v.carton / 10) * 1000) / 1000,
+            attributes: { Style: v.name },
+            reorderPoint: Math.max(10, Math.round(v.daily * 10)),
+            restockQty: Math.max(10, Math.ceil((v.daily * 30) / 10) * 10),
+            leadTimeDays: 3,
+            vendorId: "v_bargain",
+            dailySales: v.daily,
+        });
+        ["st_alcosta", "st_dublin", "st_sanramon", "wh_smoke"].forEach((loc, li) => {
+            stockLevels.push({ variantId: id, locationId: loc, available: loc === "wh_smoke" ? 0 : 4 + ((pi * 3 + vi * 5 + li * 7) % 14), inTransit: 0, returns: 0, damaged: 0 });
+        });
+    });
+});
+
+/**
+ * PO-1044: Bargain Line → Alcosta Shop (store delivery), sent. It deliberately differs from the
+ * receipt so the invoice check shows every problem type: Camel Black Series Gold isn't on the PO,
+ * American Spirit was ordered 1 but billed 2, Lucky Strike Gold is 88.50 here vs 90.19 billed,
+ * and Newport Menthol was ordered but isn't on page 1.
+ */
+const cigLine = (variantId: string, cartons: number) => {
+    const v = variants.find((x) => x.id === variantId)!;
+    return { variantId, orderedQty: cartons, unitCost: Math.round(v.cost * 10 * 100) / 100, receivedUnits: 0 };
+};
+purchaseOrders.unshift({
+    id: "po_bargain", number: "PO-1044", vendorId: "v_bargain", businessUnitId: "bu_smoke", warehouseId: "st_alcosta", status: "sent", source: "manual",
+    lines: [
+        cigLine("p_marlboro_v1", 6), cigLine("p_marlboro_v2", 3), cigLine("p_marlboro_v3", 1),
+        cigLine("p_camelbs_v1", 1),
+        cigLine("p_newportnm_v1", 1), cigLine("p_newportnm_v2", 1), cigLine("p_newportm_v1", 2),
+        cigLine("p_lucky_v1", 1), cigLine("p_lucky_v2", 1),
+        cigLine("p_amspirit_v1", 1), cigLine("p_capri_v1", 2),
+    ],
+    unexpected: [], notes: "Weekly cigarette order for Alcosta Shop — delivered direct to the store.",
+    createdBy: "e_mgr_store", createdAt: new Date(Date.now() - 2 * DAY).toISOString(), sentAt: new Date(Date.now() - 2 * DAY + 3600000).toISOString(),
+    history: [
+        { status: "created", by: "e_mgr_store", at: new Date(Date.now() - 2 * DAY).toISOString() },
+        { status: "sent", by: "e_mgr_store", at: new Date(Date.now() - 2 * DAY + 3600000).toISOString(), note: "Phoned in to Bargain Line." },
+    ],
+});

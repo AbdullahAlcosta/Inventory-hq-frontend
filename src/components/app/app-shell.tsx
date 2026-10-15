@@ -15,6 +15,7 @@ import { RequireLocation } from "./require-location";
 import { Sidebar } from "./sidebar";
 import { OnboardingTour } from "./onboarding-tour";
 import { Toaster } from "./toast";
+import { useAutoReorderOnLoad } from "./purchasing/auto-reorder-panel";
 
 export const AppShell = ({ children }: { children: ReactNode }) => {
     const hydrated = useHydrated();
@@ -27,6 +28,7 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
     const approvals = useAppStore((s) => s.approvals);
     const storeRequests = useAppStore((s) => s.storeRequests);
     const purchaseOrders = useAppStore((s) => s.purchaseOrders);
+    useAutoReorderOnLoad();
 
     useEffect(() => {
         if (hydrated && !scope) router.replace("/login");

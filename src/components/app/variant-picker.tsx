@@ -6,7 +6,7 @@ import { Select } from "@/components/base/select/select";
 import { useAppStore } from "@/store/app-store";
 
 interface VariantPickerProps {
-    /** Limit choices to products in these business units. */
+    /** Limit choices to products in these brands. */
     businessUnitIds: string[];
     /** Hide variants already chosen. */
     exclude?: string[];

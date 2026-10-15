@@ -10,7 +10,7 @@ export interface BuChartDatum {
     margin: number;
 }
 
-/** Sales vs gross margin per Business Unit — black/orange palette. */
+/** Sales vs gross margin per Brand — black/orange palette. */
 export const BuBarChart = ({ data }: { data: BuChartDatum[] }) => (
     <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">

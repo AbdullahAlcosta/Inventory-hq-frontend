@@ -89,7 +89,7 @@ export default function CompaniesPage() {
                     <Table.Header>
                         <Table.Head label="Company" isRowHeader />
                         <Table.Head label="Created" />
-                        <Table.Head label="Business units" />
+                        <Table.Head label="Brands" />
                         <Table.Head label="Locations" />
                         <Table.Head label="Employees" />
                     </Table.Header>

@@ -6,6 +6,7 @@ import { Empty } from "@/components/app/empty";
 import { FilterPills } from "@/components/app/filter-pills";
 import { LocationName } from "@/components/app/item-cell";
 import { PageHeader } from "@/components/app/page-header";
+import { AutoReorderPanel } from "@/components/app/purchasing/auto-reorder-panel";
 import { PO_STATUSES, poTotals } from "@/components/app/purchasing/po-utils";
 import { StatusBadge, statusLabel } from "@/components/app/status-badge";
 import { Table, TableCard } from "@/components/application/table/table";
@@ -31,14 +32,17 @@ export default function PurchaseOrdersPage() {
     const [filter, setFilter] = useState<Filter>("all");
     const [query, setQuery] = useState("");
 
-    // A picked warehouse narrows to that warehouse; otherwise every warehouse in scope for the active business unit(s).
+    // A picked warehouse narrows to that warehouse; otherwise every warehouse in scope for the active brand(s).
     const warehouseIds = useMemo(() => {
-        if (scope.activeLocation?.type === "warehouse") return [scope.activeLocation.id];
-        return locations.filter((l) => l.type === "warehouse" && scope.locationIds.includes(l.id) && scope.activeBusinessUnitIds.includes(l.businessUnitId)).map((l) => l.id);
-    }, [locations, scope.activeLocation, scope.locationIds, scope.activeBusinessUnitIds]);
+        if (scope.activeLocation) return [scope.activeLocation.id];
+        // Destinations are warehouses or stores; purchasing managers also see POs they send to stores in their brand.
+        return locations
+            .filter((l) => scope.activeBusinessUnitIds.includes(l.businessUnitId) && (scope.locationIds.includes(l.id) || (scope.canManagePurchasing && scope.businessUnitIds.includes(l.businessUnitId))))
+            .map((l) => l.id);
+    }, [locations, scope.activeLocation, scope.locationIds, scope.activeBusinessUnitIds, scope.businessUnitIds, scope.canManagePurchasing]);
     const singleWarehouse = warehouseIds.length === 1 ? locations.find((l) => l.id === warehouseIds[0]) : undefined;
     const buName = scope.activeBusinessUnitIds.length === 1 ? businessUnits.find((b) => b.id === scope.activeBusinessUnitIds[0])?.name : "Purchasing";
-    const eyebrow = scope.activeLocation?.type === "warehouse" ? scope.activeLocation.name : buName;
+    const eyebrow = scope.activeLocation ? scope.activeLocation.name : buName;
 
     const scoped = useMemo(() => purchaseOrders.filter((p) => warehouseIds.includes(p.warehouseId)), [purchaseOrders, warehouseIds]);
 
@@ -67,8 +71,8 @@ export default function PurchaseOrdersPage() {
                 title="Purchase Orders"
                 description={
                     scope.canManagePurchasing
-                        ? `Orders to vendors for ${singleWarehouse ? singleWarehouse.name : "your warehouses"}. Placing the order with the vendor happens outside Inventory HQ.`
-                        : `Orders coming in to ${singleWarehouse ? singleWarehouse.name : "your warehouses"}. Open one to see its lines or receive it.`
+                        ? `Orders to vendors for ${singleWarehouse ? singleWarehouse.name : "your locations"}. Placing the order with the vendor happens outside Inventory HQ.`
+                        : `Orders coming in to ${singleWarehouse ? singleWarehouse.name : "your locations"}. Open one to see its lines or receive it.`
                 }
                 actions={
                     scope.canManagePurchasing && (
@@ -78,6 +82,8 @@ export default function PurchaseOrdersPage() {
                     )
                 }
             />
+
+            {scope.canManagePurchasing && <AutoReorderPanel scope={scope} />}
 
             <FilterPills options={options} value={filter} onChange={setFilter} className="mb-4" />
 
@@ -95,7 +101,7 @@ export default function PurchaseOrdersPage() {
                         <Table.Header>
                             <Table.Head label="PO" isRowHeader />
                             <Table.Head label="Vendor" />
-                            <Table.Head label="Warehouse" />
+                            <Table.Head label="Destination" />
                             <Table.Head label="Lines" />
                             <Table.Head label="Units" />
                             <Table.Head label="Total cost" />
@@ -108,7 +114,12 @@ export default function PurchaseOrdersPage() {
                                     <Table.Cell>
                                         <div className="flex items-center gap-2">
                                             <span className="font-semibold whitespace-nowrap text-primary">{row.po.number}</span>
-                                            {row.po.source === "reorder" && (
+                                            {row.po.auto && (
+                                                <Badge type="pill-color" color="blue" size="sm">
+                                                    Auto
+                                                </Badge>
+                                            )}
+                                            {row.po.source === "reorder" && !row.po.auto && (
                                                 <Badge type="pill-color" color="purple" size="sm">
                                                     Reorder
                                                 </Badge>

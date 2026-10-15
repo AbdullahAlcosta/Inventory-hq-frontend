@@ -72,7 +72,7 @@ const AdjustmentForm = ({ isOpen, onOpenChange, locationId: initialLocation, var
     const location = locations.find((l) => l.id === locationId);
     const stock = locationId && variantId ? stockAt({ stockLevels }, variantId, locationId) : null;
 
-    // Only items sold by this location's business unit.
+    // Only items sold by this location's brand.
     const buIds = useMemo(() => (location ? [location.businessUnitId] : scope.activeBusinessUnitIds), [location, scope.activeBusinessUnitIds]);
     const variantBu = useMemo(() => {
         const v = variants.find((x) => x.id === variantId);
@@ -92,7 +92,7 @@ const AdjustmentForm = ({ isOpen, onOpenChange, locationId: initialLocation, var
         item: !variantId
             ? "Pick an item."
             : location && variantBu && variantBu !== location.businessUnitId
-              ? "This item isn’t sold by this location’s business unit."
+              ? "This item isn’t sold by this location’s brand."
               : null,
         reason: mode === "quantity" && !reason ? "Reason is required." : null,
         states: mode === "state" && fromState === toState ? "Pick two different states." : null,

@@ -20,7 +20,7 @@ import { ApprovalsCard, usePendingApprovals, useLocationMetrics } from "./dashbo
 import { RecentActivity } from "./recent-activity";
 import { SalesChart } from "./sales-chart";
 
-/** Executives and multi-location managers on "All locations" or a business unit. */
+/** Executives and multi-location managers on "All locations" or a brand. */
 export const OverviewHome = ({ scope }: { scope: Scope }) => {
     const purchaseOrders = useAppStore((s) => s.purchaseOrders);
     const mismatches = useAppStore((s) => s.mismatches);
@@ -182,7 +182,7 @@ export const OverviewHome = ({ scope }: { scope: Scope }) => {
                         }
                     >
                         {connections.length === 0 ? (
-                            <Empty icon={LayersThree01} title="No channels" description="No sales channels in these business units." />
+                            <Empty icon={LayersThree01} title="No channels" description="No sales channels in these brands." />
                         ) : (
                             <ul className="divide-y divide-secondary">
                                 {connections.map((c) => (

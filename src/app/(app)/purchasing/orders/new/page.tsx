@@ -40,14 +40,18 @@ function NewPurchaseOrder() {
         return v && vendorOptions.some((x) => x.id === v) ? v : null;
     });
     const vendor = vendors.find((v) => v.id === vendorId);
-    // Every warehouse this person works with in the active business unit(s) — not just the picked location, so a PO
+    // Every warehouse this person works with in the active brand(s) — not just the picked location, so a PO
     // can be raised from a store context too.
     const scopedWarehouses = useMemo(
-        () => locations.filter((l) => l.type === "warehouse" && scope.locationIds.includes(l.id) && scope.activeBusinessUnitIds.includes(l.businessUnitId)),
+        () =>
+            locations
+                // Warehouses this person works with, plus any store in the same brand (POs can be delivered straight to a store).
+                .filter((l) => (l.type === "store" || scope.locationIds.includes(l.id)) && scope.activeBusinessUnitIds.includes(l.businessUnitId) && scope.businessUnitIds.includes(l.businessUnitId))
+                .sort((a, b) => (a.type === b.type ? a.name.localeCompare(b.name) : a.type === "warehouse" ? -1 : 1)),
         [locations, scope.locationIds, scope.activeBusinessUnitIds],
     );
     const warehouseOptions = useMemo(() => scopedWarehouses.filter((w) => vendor?.businessUnitIds.includes(w.businessUnitId)), [scopedWarehouses, vendor]);
-    const activeWarehouseId = scope.activeLocation?.type === "warehouse" ? scope.activeLocation.id : null;
+    const activeWarehouseId = scope.activeLocation?.id ?? null;
     const [warehouseId, setWarehouseId] = useState<string | null>(activeWarehouseId);
     const warehouse = warehouseOptions.find((w) => w.id === warehouseId);
     const [lines, setLines] = useState<DraftLine[]>([]);
@@ -60,7 +64,7 @@ function NewPurchaseOrder() {
         if (warehouseId && !warehouseOptions.some((w) => w.id === warehouseId)) setWarehouseId(null);
         if (!warehouseId) {
             if (activeWarehouseId && warehouseOptions.some((w) => w.id === activeWarehouseId)) setWarehouseId(activeWarehouseId);
-            else if (warehouseOptions.length === 1) setWarehouseId(warehouseOptions[0].id);
+            else if (warehouseOptions.filter((w) => w.type === "warehouse").length === 1) setWarehouseId(warehouseOptions.find((w) => w.type === "warehouse")!.id);
         }
     }, [vendor, warehouseOptions, warehouseId, activeWarehouseId]);
 
@@ -82,7 +86,7 @@ function NewPurchaseOrder() {
     }
 
     const totals = poTotals({ products, variants }, { lines: lines.map((l) => ({ ...l, receivedUnits: 0 })) });
-    const errors = [!vendorId && "Choose a vendor.", !warehouseId && "Choose a destination warehouse.", lines.length === 0 && "Add at least one line."].filter(Boolean) as string[];
+    const errors = [!vendorId && "Choose a vendor.", !warehouseId && "Choose a destination.", lines.length === 0 && "Add at least one line."].filter(Boolean) as string[];
 
     const save = () => {
         setTouched(true);
@@ -119,11 +123,12 @@ function NewPurchaseOrder() {
                         )}
                     </Select>
                     <Select
-                        label="Destination warehouse"
+                        label="Destination"
+                        hint="A warehouse, or deliver straight to a store in this brand."
                         isRequired
                         isDisabled={!vendor}
-                        placeholder={vendor ? (warehouseOptions.length ? "Choose a warehouse" : "None of your warehouses match this vendor") : "Choose a vendor first"}
-                        items={warehouseOptions.map((w) => ({ id: w.id, label: w.name, supportingText: w.code }))}
+                        placeholder={vendor ? (warehouseOptions.length ? "Choose a warehouse or store" : "None of your locations match this vendor") : "Choose a vendor first"}
+                        items={warehouseOptions.map((w) => ({ id: w.id, label: w.name, supportingText: `${w.type === "warehouse" ? "Warehouse" : "Store"} · ${w.code}` }))}
                         selectedKey={warehouseId}
                         onSelectionChange={(k) => setWarehouseId(k ? String(k) : null)}
                         isInvalid={touched && !warehouseId}

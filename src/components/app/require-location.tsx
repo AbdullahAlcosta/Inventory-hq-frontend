@@ -22,7 +22,7 @@ export const RequireLocation = ({ scope, requirement, children }: { scope: Scope
     const fits = (type: "store" | "warehouse") => requirement === "any" || requirement === type;
     if (scope.activeLocation && fits(scope.activeLocation.type)) return <>{children}</>;
 
-    // Offer locations inside the current overview first (e.g. a business unit), else everything in scope.
+    // Offer locations inside the current overview first (e.g. a brand), else everything in scope.
     const pool = locations.filter((l) => scope.locationIds.includes(l.id) && fits(l.type));
     const narrowed = pool.filter((l) => scope.activeLocationIds.includes(l.id));
     const options = narrowed.length ? narrowed : pool;
@@ -34,7 +34,7 @@ export const RequireLocation = ({ scope, requirement, children }: { scope: Scope
                 <h1 className="text-display-xs font-semibold text-primary">Choose a {kindLabel[requirement]}</h1>
                 <p className="mt-1 text-md text-tertiary">
                     {options.length
-                        ? `This page works on one ${kindLabel[requirement]} at a time. Pick one here or in the location switcher in the sidebar.`
+                        ? `This page works on one ${kindLabel[requirement]} at a time. Pick one here, or choose a brand and location in the sidebar.`
                         : `This page is for ${kindLabel[requirement]} staff, and you aren’t assigned to a ${kindLabel[requirement]}.`}
                 </p>
                 <div className="mt-6 flex flex-col gap-5">

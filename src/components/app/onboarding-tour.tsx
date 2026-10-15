@@ -65,8 +65,8 @@ const buildSteps = (scope: Scope, locationName: string | null): TourStep[] => {
             body:
                 scope.locationIds.length > 1 ? (
                     <>
-                        Choose <b>All locations</b> for an overview, a whole business unit, or one store or warehouse. Inventory, Stock Control, Store Requests and Receiving
-                        always work on one location at a time.
+                        Pick a brand, then a location. Choose <b>All brands</b> or <b>All locations</b> for an overview, or one store or warehouse. Inventory, Stock Control,
+                        Store Requests and Receiving always work on one location at a time.
                     </>
                 ) : (
                     <>Everything you see is for {locationName ?? "your assigned location"}. Your access comes from your role and assignment.</>
@@ -143,7 +143,7 @@ const buildSteps = (scope: Scope, locationName: string | null): TourStep[] => {
             target: nav("/reports/executive"),
             when: scope.isExecutive,
             title: "Company",
-            body: "The monthly Executive report, Locations and Employees — set up business units, stores and warehouses, and give each person a role and assignment — plus company Settings to switch optional features like channel allocation on or off.",
+            body: "The monthly Executive report, Locations and Employees — set up brands, stores and warehouses, and give each person a role and assignment — plus company Settings to switch optional features like channel allocation on or off.",
         },
         {
             target: "account",

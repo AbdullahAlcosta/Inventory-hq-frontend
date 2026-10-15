@@ -17,6 +17,11 @@ export interface CompanySettings {
      * When off, every channel sells from the store's full Available stock, minus its safety buffer.
      */
     channelAllocation: boolean;
+    /**
+     * Automatic reorders (PRD §5.8). "suggest" (default): suggestions land in Approvals.
+     * "auto_draft": draft POs are created automatically (never sent). "off": status only.
+     */
+    autoPO?: "off" | "suggest" | "auto_draft";
 }
 
 export interface Company {
@@ -103,6 +108,8 @@ export interface Variant {
     vendorId: ID | null;
     /** Average units sold per day across all stores (drives run-out projection). */
     dailySales: number;
+    /** "Minimum qty" is `reorderPoint`. Days of stock to order beyond lead time (default 14). */
+    coverDays?: number;
 }
 
 export interface Product {
@@ -279,12 +286,15 @@ export interface PurchaseOrder {
     number: string;
     vendorId: ID;
     businessUnitId: ID;
+    /** Destination location: a warehouse or a store (name kept for compatibility). */
     warehouseId: ID;
     status: POStatus;
     lines: POLine[];
     unexpected: UnexpectedItem[];
     notes: string;
-    source: "manual" | "reorder";
+    source: "manual" | "reorder" | "invoice";
+    /** Created by the automatic reorder run (always starts as a draft). */
+    auto?: boolean;
     createdBy: ID;
     createdAt: string;
     sentAt?: string;
@@ -344,7 +354,8 @@ export type ApprovalType =
     | "mismatch"
     | "import_duplicate"
     | "sync_failure"
-    | "transfer_request";
+    | "transfer_request"
+    | "invoice_issue";
 
 export type ApprovalStatus = "pending" | "approved" | "rejected" | "dismissed" | "resolved";
 
@@ -357,7 +368,8 @@ export type ApprovalPayload =
     | { type: "mismatch"; mismatchId: ID }
     | { type: "import_duplicate"; importRow: ImportRow; matchProductId: ID; matchVariantId: ID | null; reason: string }
     | { type: "sync_failure"; connectionId: ID; variantIds: ID[]; reason: string; kind: "blocked" | "failed" }
-    | { type: "transfer_request"; requestId: ID };
+    | { type: "transfer_request"; requestId: ID }
+    | { type: "invoice_issue"; invoiceId: ID };
 
 export interface Approval {
     id: ID;
@@ -413,4 +425,74 @@ export interface ActivityEntry {
     /** Signed quantity change, when the activity moved stock. */
     quantity?: number;
     reason?: string;
+}
+
+/* ------------------------------------------------------------------ */
+/* Vendor invoices / receipts (scan + reconcile against the PO)        */
+/* ------------------------------------------------------------------ */
+
+export interface InvoiceLine {
+    /** Item lookup code as printed — usually the UPC (case/carton barcode) or the vendor SKU. */
+    code: string;
+    description: string;
+    qty: number;
+    unitPrice: number;
+    extended: number;
+}
+
+export interface InvoiceIssue {
+    id: ID;
+    kind:
+        | "duplicate_line"
+        | "not_ordered"
+        | "not_shipped"
+        | "qty_mismatch"
+        | "short_received"
+        | "price_change"
+        | "unknown_code"
+        | "math_error"
+        | "incomplete_scan";
+    severity: "error" | "warning" | "info";
+    message: string;
+    code?: string;
+    variantId?: ID | null;
+    invoiceQty?: number;
+    orderedQty?: number;
+    receivedQty?: number;
+    /** Prices are per purchase unit. */
+    invoicePrice?: number;
+    poPrice?: number;
+    catalogCost?: number;
+    changePct?: number;
+    /** Money involved (e.g. over-billed amount). */
+    amount?: number;
+}
+
+export interface VendorInvoice {
+    id: ID;
+    vendorId: ID;
+    poId: ID | null;
+    /** Store or warehouse the goods were delivered to. */
+    destinationId: ID;
+    businessUnitId: ID;
+    /** Invoice / transaction number as printed. Unique per vendor. */
+    number: string;
+    accountNumber: string;
+    /** Invoice date (YYYY-MM-DD) as printed. */
+    date: string;
+    /** Pages photographed. */
+    pages: number;
+    /** "Page 1 of 2" → 2. Null when the invoice doesn't say. */
+    totalPages: number | null;
+    lines: InvoiceLine[];
+    total: number;
+    status: "matched" | "issues" | "resolved";
+    issues: InvoiceIssue[];
+    approvalId: ID | null;
+    /** Set when someone disputed the invoice with the vendor. */
+    disputeNote?: string;
+    resolution?: string;
+    createdBy: ID;
+    createdAt: string;
+    imageName: string;
 }

@@ -92,7 +92,7 @@ export default function EmployeesPage() {
                 className="mb-0"
                 eyebrow="Setup"
                 title="Employees"
-                description="A person's access always comes from their assignment (role + Business Unit + Location)."
+                description="A person's access always comes from their assignment (role + Brand + Location)."
                 actions={
                     <Button color="primary" size="md" iconLeading={Plus} onPress={() => setAdding(true)}>
                         Add employee
@@ -125,7 +125,7 @@ export default function EmployeesPage() {
                             <Table.Head label="Name" isRowHeader />
                             <Table.Head label="Role" />
                             <Table.Head label="Level" />
-                            <Table.Head label="Business units" />
+                            <Table.Head label="Brands" />
                             <Table.Head label="Locations" />
                             <Table.Head label="Status" />
                             <Table.Head label="" />
@@ -199,7 +199,7 @@ export default function EmployeesPage() {
                 }}
                 size="lg"
                 title="Add employee"
-                description="They'll be invited and can sign in from the login screen. Access comes from role + business unit + location."
+                description="They'll be invited and can sign in from the login screen. Access comes from role + brand + location."
                 footer={
                     <>
                         <Button color="secondary" size="lg" onPress={() => setAdding(false)}>

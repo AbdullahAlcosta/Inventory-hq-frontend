@@ -42,7 +42,7 @@ const StartCountForm = ({ isOpen, onOpenChange, locationId: initialLocation }: S
     const location = locations.find((l) => l.id === locationId);
     const kind = location && !location.openingCountDone ? "opening" : "cycle";
 
-    /** Every active variant sold by this location's business unit. */
+    /** Every active variant sold by this location's brand. */
     const buVariants = useMemo(() => {
         if (!location) return [];
         const ids = new Set(products.filter((p) => p.businessUnitId === location.businessUnitId && p.status !== "archived").map((p) => p.id));
