@@ -11,6 +11,7 @@ import { LocationName, VariantCell } from "@/components/app/item-cell";
 import { PageHeader } from "@/components/app/page-header";
 import { poTotals } from "@/components/app/purchasing/po-utils";
 import { VendorFormModal } from "@/components/app/purchasing/vendor-form-modal";
+import { InvoiceVendorSpend } from "@/components/app/purchasing/invoice-vendor-spend";
 import { StatusBadge } from "@/components/app/status-badge";
 import { Table, TableCard } from "@/components/application/table/table";
 import { Button } from "@/components/base/buttons/button";
@@ -170,6 +171,8 @@ function VendorDetailPage() {
                     </Table>
                 )}
             </TableCard.Root>
+
+            <InvoiceVendorSpend vendorId={vendor.id} />
 
             <VendorFormModal isOpen={editing} onOpenChange={setEditing} vendor={vendor} />
         </div>

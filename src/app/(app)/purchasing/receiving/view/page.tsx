@@ -274,7 +274,7 @@ function ReceivePOPage() {
                 </div>
             </div>
 
-            <InvoiceScan vendorId={po.vendorId} destinationId={po.warehouseId} po={po} />
+            {po.source !== "invoice" && <InvoiceScan vendorId={po.vendorId} destinationId={po.warehouseId} po={po} />}
 
             {/* Finish bar — sticky at the bottom on phones/tablets */}
             <div className="fixed inset-x-0 bottom-0 z-10 border-t border-secondary bg-primary/95 px-4 py-3 backdrop-blur lg:static lg:rounded-2xl lg:px-6 lg:py-4 lg:ring-1 lg:ring-secondary">

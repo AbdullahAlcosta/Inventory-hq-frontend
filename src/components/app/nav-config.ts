@@ -3,6 +3,7 @@ import {
     BarChartSquare02,
     Building07,
     CheckDone01,
+    File06,
     ClipboardCheck,
     ClockRewind,
     HomeLine,
@@ -73,6 +74,7 @@ export const navSections: NavSection[] = [
         title: "Purchasing",
         items: [
             { label: "Purchase Orders", href: "/purchasing/orders", icon: ShoppingCart01, visible: purchasingStaff },
+            { label: "Vendor Invoices", href: "/purchasing/invoices", icon: File06, visible: (s) => s.canReceive },
             { label: "Vendors", href: "/purchasing/vendors", icon: Building07, visible: purchasingManagers },
             { label: "Reorder", href: "/purchasing/reorder", icon: Repeat04, visible: purchasingManagers },
         ],
