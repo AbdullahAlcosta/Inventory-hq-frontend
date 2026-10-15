@@ -46,14 +46,14 @@ a whole **business unit**, or **one store or warehouse**. People assigned to a s
 - **Location pages** — Inventory, Stock Control, Store Requests, Receiving — always work on one location.
   On an overview they ask you to pick one first.
 - **Dashboard** shows a company/BU overview or that location's dashboard.
-- **Company-level pages** — Catalog, Product Lookup, Approvals, Purchasing, Channels, Reports, Setup — show the whole
+- **Company-level pages** — Products, Approvals, Purchasing, Channels, Reports, Setup — show the whole
   company, or the business unit of the picked location.
 
 ### Who can do what
 
 | | Executive | Warehouse manager | Store manager | Warehouse associate | Store associate |
 | --- | :-: | :-: | :-: | :-: | :-: |
-| Dashboard, Inventory, Stock Control, Store Requests, Product Lookup, Products (view) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Dashboard, Inventory, Stock Control, Store Requests, Products (search, scan, stock everywhere) | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Approvals (own locations) | all | warehouse items + import duplicates | store items | – | – |
 | Create/edit products, bulk import | ✓ | ✓ | – | – | – |
 | Vendors, create POs, reorder | ✓ | ✓ | – | – | – |
@@ -81,7 +81,7 @@ Typing a code by hand is the fallback, and **Simulate scan** lists demo barcodes
 | Catalog §5.2 | Products & variants, naming guidance (Appendix A), live duplicate check, units of measure, barcodes, compliance flags, bulk import with duplicate review |
 | Sales channels §5.3 | Connections (Quickvee per store, Shopify/WooCommerce per BU), sync speed, safety buffer, blocked flags, push with compliance check, stock allocation (Shared / Dedicated / Hybrid) |
 | Reconciliation §5.4 | Expected vs reported dashboard, pull now, upload export → mismatch report |
-| Stock §5.5 | Inventory by state (per location), product lookup across locations, Stock Control (opening & cycle counts by scanning + adjustments with reasons, one history), activity log |
+| Stock §5.5 | Inventory by state (per location), product stock across all locations (Products → Stock tab), Stock Control (opening & cycle counts by scanning + adjustments with reasons, one history), activity log |
 | Purchasing §5.6 | Vendors, purchase orders and lifecycle, scan-based receiving (case → units, unexpected items, partial POs) |
 | Replenishment §5.7 | Store requests from the warehouse or another store: Requested → Picked → Packed → Shipped (In Transit) → Confirmed |
 | Reordering §5.8 | Reorder points, sales speed, run-out projection, suggestions → Approvals → POs (one per vendor) |

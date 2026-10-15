@@ -9,7 +9,6 @@ import {
     LayersThree01,
     Link01,
     Package,
-    PackageSearch,
     RefreshCw01,
     Repeat04,
     Scan,
@@ -65,7 +64,6 @@ export const navSections: NavSection[] = [
         title: "Catalog",
         items: [
             { label: "Products", href: "/catalog/products", icon: Package, visible: all },
-            { label: "Product Lookup", href: "/stock/lookup", icon: PackageSearch, visible: all },
             { label: "Bulk Import", href: "/catalog/import", icon: Upload01, visible: catalogManagers },
         ],
     },

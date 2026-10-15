@@ -1,16 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
 import { Package, Plus, SearchLg, Upload01 } from "@untitledui/icons";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Key } from "react-aria-components";
 import { BusinessUnitAvatar } from "@/components/app/bu-avatar";
-import { ComplianceChips } from "@/components/app/catalog/compliance-chips";
 import { priceRange, productSearchText } from "@/components/app/catalog/catalog-utils";
+import { ComplianceChips } from "@/components/app/catalog/compliance-chips";
 import { Empty } from "@/components/app/empty";
 import { FilterPills } from "@/components/app/filter-pills";
 import { ProductSwatch } from "@/components/app/item-cell";
 import { PageHeader } from "@/components/app/page-header";
+import { type ScanFeedback, ScanInput } from "@/components/app/scan-input";
 import { StatusBadge } from "@/components/app/status-badge";
 import { Table, TableCard } from "@/components/application/table/table";
 import { Button } from "@/components/base/buttons/button";
@@ -18,6 +19,7 @@ import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
 import { useRequiredScope } from "@/hooks/use-session";
 import { formatCurrency, formatNumber } from "@/lib/format";
+import { lookupCode } from "@/lib/selectors";
 import type { Product } from "@/lib/types";
 import { useAppStore } from "@/store/app-store";
 import { cx } from "@/utils/cx";
@@ -25,14 +27,35 @@ import { cx } from "@/utils/cx";
 type StatusFilter = "all" | Product["status"];
 
 export default function ProductsPage() {
+    return (
+        <Suspense fallback={null}>
+            <Products />
+        </Suspense>
+    );
+}
+
+function Products() {
     const scope = useRequiredScope();
     const router = useRouter();
+    const pathname = usePathname();
+    const params = useSearchParams();
     const products = useAppStore((s) => s.products);
     const variants = useAppStore((s) => s.variants);
     const stockLevels = useAppStore((s) => s.stockLevels);
     const businessUnits = useAppStore((s) => s.businessUnits);
 
-    const [query, setQuery] = useState("");
+    // ?q= comes from the header search ("Search products, SKUs or scan a barcode").
+    const urlQ = params.get("q") ?? "";
+    const [query, setQueryState] = useState(urlQ);
+    const [lastUrlQ, setLastUrlQ] = useState(urlQ);
+    if (urlQ !== lastUrlQ) {
+        setLastUrlQ(urlQ);
+        setQueryState(urlQ);
+    }
+    const setQuery = (q: string) => {
+        setQueryState(q);
+        if (params.get("q")) router.replace(pathname, { scroll: false });
+    };
     const [status, setStatus] = useState<StatusFilter>("active");
     const [buFilter, setBuFilter] = useState<string>("all");
     const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -51,7 +74,9 @@ export default function ProductsPage() {
             });
     }, [products, variants, stockLevels, scope.activeBusinessUnitIds, scope.activeLocationIds]);
 
-    const scoped = rows.filter((r) => (buFilter === "all" || r.product.businessUnitId === buFilter) && (typeFilter === "all" || r.product.productType === typeFilter));
+    const scoped = rows.filter(
+        (r) => (buFilter === "all" || r.product.businessUnitId === buFilter) && (typeFilter === "all" || r.product.productType === typeFilter),
+    );
     const q = query.trim().toLowerCase();
     const searched = q ? scoped.filter((r) => q.split(/\s+/).every((t) => r.search.includes(t))) : scoped;
     const visible = searched.filter((r) => status === "all" || r.product.status === status);
@@ -60,13 +85,28 @@ export default function ProductsPage() {
     const types = Array.from(new Set(rows.filter((r) => buFilter === "all" || r.product.businessUnitId === buFilter).map((r) => r.product.productType))).sort();
 
     const eyebrow = activeBus.length === 1 ? activeBus[0].name : "Catalog";
+    const here = scope.activeLocation;
+
+    // Scanning an item opens its product on the Stock tab, with that variant highlighted.
+    const buProducts = products.filter((p) => scope.activeBusinessUnitIds.includes(p.businessUnitId));
+    const onScan = (code: string): ScanFeedback => {
+        const hit = lookupCode({ products: buProducts, variants }, code);
+        if (!hit) return { tone: "error", title: "No match", description: `No product in view has barcode or SKU ${code}.` };
+        router.push(`/catalog/products/view?id=${hit.product.id}&tab=stock&variant=${hit.variant.id}`);
+        return { tone: "success", title: `${hit.product.name} — ${hit.variant.name}` };
+    };
+    const simulate = buProducts.slice(0, 4).flatMap((p, i) => {
+        const v = variants.find((x) => x.productId === p.id);
+        const b = v?.barcodes.find((x) => x.unit === (i === 3 ? "purchase" : "selling"));
+        return v && b ? [{ code: b.code, label: `${p.name} — ${v.name}`, hint: b.unit === "purchase" ? `${p.uom.purchaseUnit} barcode` : "Item barcode" }] : [];
+    });
 
     return (
         <>
             <PageHeader
                 eyebrow={eyebrow}
                 title="Products"
-                description="One record per product. Flavors, colors, strengths and sizes are variants."
+                description="Find any item and see its stock at every store and warehouse. One record per product — flavors, colors, strengths and sizes are variants."
                 actions={
                     scope.canManageCatalog && (
                         <>
@@ -80,6 +120,8 @@ export default function ProductsPage() {
                     )
                 }
             />
+
+            <ScanInput onScan={onScan} simulate={simulate} autoFocus={false} placeholder="Scan a barcode to open the item’s stock" className="mb-4" />
 
             <div className="mb-4 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                 <FilterPills<StatusFilter>
@@ -120,7 +162,7 @@ export default function ProductsPage() {
                     <Select
                         aria-label="Product type"
                         size="sm"
-                            className="sm:w-44"
+                        className="sm:w-44"
                         items={[{ id: "all", label: "All product types" }, ...types.map((t) => ({ id: t, label: t }))]}
                         selectedKey={typeFilter}
                         onSelectionChange={(k: Key | null) => setTypeFilter(String(k ?? "all"))}
@@ -135,7 +177,13 @@ export default function ProductsPage() {
                     <Empty
                         icon={Package}
                         title={q ? "No products match your search" : "No products here yet"}
-                        description={q ? "Try a brand, SKU or scan a barcode." : scope.canManageCatalog ? "Create a product or import a list from your POS." : "Ask a warehouse manager or an executive to add products."}
+                        description={
+                            q
+                                ? "Try a brand, SKU or scan a barcode."
+                                : scope.canManageCatalog
+                                  ? "Create a product or import a list from your POS."
+                                  : "Ask a warehouse manager or an executive to add products."
+                        }
                         action={
                             scope.canManageCatalog && !q ? (
                                 <Button color="primary" size="md" iconLeading={Plus} href="/catalog/products/new">
@@ -151,7 +199,14 @@ export default function ProductsPage() {
                             <Table.Head label="Business unit" />
                             <Table.Head label="Variants" />
                             <Table.Head label="Price" />
-                            <Table.Head label="Available" tooltip="Sellable units across your locations" />
+                            <Table.Head
+                                label={here ? `At ${here.name}` : "Available"}
+                                tooltip={
+                                    here
+                                        ? `Sellable units at ${here.name}. Open a product to see every location.`
+                                        : "Sellable units across your locations. Open a product to see every location."
+                                }
+                            />
                             <Table.Head label="Compliance" />
                             <Table.Head label="Status" />
                         </Table.Header>
@@ -177,10 +232,16 @@ export default function ProductsPage() {
                                         </Table.Cell>
                                         <Table.Cell className="tabular-nums">{r.variants.length}</Table.Cell>
                                         <Table.Cell className="whitespace-nowrap tabular-nums">
-                                            {r.range ? (r.range.min === r.range.max ? formatCurrency(r.range.min) : `${formatCurrency(r.range.min)} – ${formatCurrency(r.range.max)}`) : "—"}
+                                            {r.range
+                                                ? r.range.min === r.range.max
+                                                    ? formatCurrency(r.range.min)
+                                                    : `${formatCurrency(r.range.min)} – ${formatCurrency(r.range.max)}`
+                                                : "—"}
                                         </Table.Cell>
                                         <Table.Cell>
-                                            <span className={cx("font-semibold tabular-nums", r.available === 0 ? "text-error-primary" : "text-primary")}>{formatNumber(r.available)}</span>
+                                            <span className={cx("font-semibold tabular-nums", r.available === 0 ? "text-error-primary" : "text-primary")}>
+                                                {formatNumber(r.available)}
+                                            </span>
                                         </Table.Cell>
                                         <Table.Cell>
                                             <div className="min-w-44">
@@ -199,7 +260,8 @@ export default function ProductsPage() {
             </TableCard.Root>
             {visible.length > 0 && (
                 <p className="mt-3 text-sm text-tertiary">
-                    Showing {visible.length} of {rows.length} products · Available counts {scope.activeLocationIds.length} location{scope.activeLocationIds.length === 1 ? "" : "s"}
+                    Showing {visible.length} of {rows.length} products · Available counts {scope.activeLocationIds.length} location
+                    {scope.activeLocationIds.length === 1 ? "" : "s"}
                 </p>
             )}
         </>

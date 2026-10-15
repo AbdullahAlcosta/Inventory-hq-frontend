@@ -86,7 +86,7 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
                         className="relative w-full max-w-md"
                         onSubmit={(e) => {
                             e.preventDefault();
-                            router.push(`/stock/lookup?q=${encodeURIComponent(query)}`);
+                            router.push(`/catalog/products?q=${encodeURIComponent(query)}`);
                         }}
                     >
                         <SearchLg className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-fg-quaternary" />

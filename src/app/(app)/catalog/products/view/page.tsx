@@ -1,14 +1,15 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { Archive, Edit05, LinkExternal01, Package, Plus, RefreshCcw01 } from "@untitledui/icons";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BusinessUnitAvatar } from "@/components/app/bu-avatar";
 import { Card, Field } from "@/components/app/card";
 import { type VariantDraft, margin, priceRange } from "@/components/app/catalog/catalog-utils";
 import { ComplianceChips } from "@/components/app/catalog/compliance-chips";
 import { ProductEditModal } from "@/components/app/catalog/product-edit-modal";
 import { UomSummary } from "@/components/app/catalog/product-fields";
+import { ProductStockCard, useRequestFor } from "@/components/app/catalog/product-stock-grid";
 import { VariantModal } from "@/components/app/catalog/variant-modal";
 import { Empty } from "@/components/app/empty";
 import { FilterPills } from "@/components/app/filter-pills";
@@ -51,10 +52,13 @@ function ProductDetail() {
     const updateProduct = useAppStore((s) => s.updateProduct);
 
     const variants = useMemo(() => allVariants.filter((v) => v.productId === id), [allVariants, id]);
-    const [tab, setTab] = useState<string>("overview");
+    const [tab, setTab] = useState<string>(() => searchParams.get("tab") ?? (scope.canManageCatalog ? "overview" : "stock"));
     const [editOpen, setEditOpen] = useState(false);
     const [archiveOpen, setArchiveOpen] = useState(false);
-    const [variantModal, setVariantModal] = useState<{ open: boolean; variant: Variant | null; initial?: Partial<VariantDraft> }>({ open: false, variant: null });
+    const [variantModal, setVariantModal] = useState<{ open: boolean; variant: Variant | null; initial?: Partial<VariantDraft> }>({
+        open: false,
+        variant: null,
+    });
 
     // "Add as variant of…" from the create form arrives with a prefilled add-variant dialog.
     useEffect(() => {
@@ -78,7 +82,11 @@ function ProductDetail() {
             <>
                 <PageHeader eyebrow="Catalog" title="Product not found" backHref="/catalog/products" backLabel="Products" />
                 <Card>
-                    <Empty icon={Package} title="This product doesn't exist or isn't in your business units" action={<Button href="/catalog/products">Back to products</Button>} />
+                    <Empty
+                        icon={Package}
+                        title="This product doesn't exist or isn't in your business units"
+                        action={<Button href="/catalog/products">Back to products</Button>}
+                    />
                 </Card>
             </>
         );
@@ -139,7 +147,11 @@ function ProductDetail() {
             <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
                 <StatCard label="Variants" value={variants.length} hint={product.uom.sellingUnit + " level"} />
                 <StatCard label="Available" value={formatNumber(available)} hint={`Across ${locations.length} location${locations.length === 1 ? "" : "s"}`} />
-                <StatCard label="Price" value={range ? (range.min === range.max ? formatCurrency(range.min) : `${formatCurrency(range.min)}+`) : "—"} hint={range && range.min !== range.max ? `Up to ${formatCurrency(range.max)}` : "Same for all variants"} />
+                <StatCard
+                    label="Price"
+                    value={range ? (range.min === range.max ? formatCurrency(range.min) : `${formatCurrency(range.min)}+`) : "—"}
+                    hint={range && range.min !== range.max ? `Up to ${formatCurrency(range.max)}` : "Same for all variants"}
+                />
                 <StatCard label="Avg. margin" value={`${Math.round(avgMargin * 100)}%`} hint="Price vs cost" tone={avgMargin < 0.3 ? "warning" : "default"} />
             </div>
 
@@ -151,10 +163,16 @@ function ProductDetail() {
                     <OverviewTab product={product} variants={variants} />
                 </Tabs.Panel>
                 <Tabs.Panel id="variants" className="pt-6">
-                    <VariantsTab product={product} variants={variants} canManage={scope.canManageCatalog} onEdit={(v) => setVariantModal({ open: true, variant: v })} onAdd={() => setVariantModal({ open: true, variant: null })} />
+                    <VariantsTab
+                        product={product}
+                        variants={variants}
+                        canManage={scope.canManageCatalog}
+                        onEdit={(v) => setVariantModal({ open: true, variant: v })}
+                        onAdd={() => setVariantModal({ open: true, variant: null })}
+                    />
                 </Tabs.Panel>
                 <Tabs.Panel id="stock" className="pt-6">
-                    <StockTab variants={variants} scope={scope} productBu={product.businessUnitId} />
+                    <StockTab product={product} variants={variants} scope={scope} highlight={searchParams.get("variant")} />
                 </Tabs.Panel>
                 {scope.canManageChannels && (
                     <Tabs.Panel id="channels" className="pt-6">
@@ -227,7 +245,12 @@ const OverviewTab = ({ product, variants }: { product: Product; variants: Varian
                     <UomSummary purchaseUnit={product.uom.purchaseUnit} sellingUnit={product.uom.sellingUnit} units={product.uom.unitsPerPurchaseUnit} />
                 </Card>
             </div>
-            <Card className="lg:self-start" title="Barcodes" description={`Each variant has a ${product.uom.sellingUnit.toLowerCase()} barcode and a ${product.uom.purchaseUnit.toLowerCase()} barcode.`} flush>
+            <Card
+                className="lg:self-start"
+                title="Barcodes"
+                description={`Each variant has a ${product.uom.sellingUnit.toLowerCase()} barcode and a ${product.uom.purchaseUnit.toLowerCase()} barcode.`}
+                flush
+            >
                 {variants.length === 0 ? (
                     <Empty title="No variants yet" />
                 ) : (
@@ -240,7 +263,10 @@ const OverviewTab = ({ product, variants }: { product: Product; variants: Varian
                                 </div>
                                 <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
                                     <BarcodeChip unit={`1 ${product.uom.sellingUnit}`} code={v.barcodes.find((b) => b.unit === "selling")?.code} />
-                                    <BarcodeChip unit={`1 ${product.uom.purchaseUnit} = ${product.uom.unitsPerPurchaseUnit}`} code={v.barcodes.find((b) => b.unit === "purchase")?.code} />
+                                    <BarcodeChip
+                                        unit={`1 ${product.uom.purchaseUnit} = ${product.uom.unitsPerPurchaseUnit}`}
+                                        code={v.barcodes.find((b) => b.unit === "purchase")?.code}
+                                    />
                                 </div>
                             </li>
                         ))}
@@ -262,7 +288,19 @@ const BarcodeChip = ({ unit, code }: { unit: string; code?: string }) => (
 /* Variants                                                            */
 /* ------------------------------------------------------------------ */
 
-const VariantsTab = ({ product, variants, canManage, onEdit, onAdd }: { product: Product; variants: Variant[]; canManage: boolean; onEdit: (v: Variant) => void; onAdd: () => void }) => {
+const VariantsTab = ({
+    product,
+    variants,
+    canManage,
+    onEdit,
+    onAdd,
+}: {
+    product: Product;
+    variants: Variant[];
+    canManage: boolean;
+    onEdit: (v: Variant) => void;
+    onAdd: () => void;
+}) => {
     const vendors = useAppStore((s) => s.vendors);
     if (!variants.length)
         return (
@@ -312,10 +350,12 @@ const VariantsTab = ({ product, variants, canManage, onEdit, onAdd }: { product:
                                 <Table.Cell>
                                     <div className="flex flex-col gap-0.5 font-mono text-xs whitespace-nowrap">
                                         <span>
-                                            <span className="text-quaternary">{product.uom.sellingUnit}:</span> {v.barcodes.find((b) => b.unit === "selling")?.code ?? "—"}
+                                            <span className="text-quaternary">{product.uom.sellingUnit}:</span>{" "}
+                                            {v.barcodes.find((b) => b.unit === "selling")?.code ?? "—"}
                                         </span>
                                         <span>
-                                            <span className="text-quaternary">{product.uom.purchaseUnit}:</span> {v.barcodes.find((b) => b.unit === "purchase")?.code ?? "—"}
+                                            <span className="text-quaternary">{product.uom.purchaseUnit}:</span>{" "}
+                                            {v.barcodes.find((b) => b.unit === "purchase")?.code ?? "—"}
                                         </span>
                                     </div>
                                 </Table.Cell>
@@ -351,16 +391,41 @@ const VariantsTab = ({ product, variants, canManage, onEdit, onAdd }: { product:
 /* Stock                                                               */
 /* ------------------------------------------------------------------ */
 
-const StockTab = ({ variants, scope, productBu }: { variants: Variant[]; scope: Scope; productBu: string }) => {
+const StockTab = ({ product, variants, scope, highlight }: { product: Product; variants: Variant[]; scope: Scope; highlight: string | null }) => {
     const stockLevels = useAppStore((s) => s.stockLevels);
-    const locations = scope.locations.filter((l) => l.businessUnitId === productBu);
+    const allLocations = useAppStore((s) => s.locations);
+    const requestFor = useRequestFor(scope);
+    const locations = scope.locations.filter((l) => l.businessUnitId === product.businessUnitId);
     const [loc, setLoc] = useState<string>("all");
 
-    if (!locations.length) return <Card><Empty title="No locations in view" description="Switch business unit in the sidebar to see stock." /></Card>;
+    // Company-wide view: Available at every store and warehouse in the business unit, with request buttons for store staff.
+    const everywhere = (
+        <ProductStockCard
+            title="Available at every location"
+            product={product}
+            variants={variants}
+            highlight={highlight}
+            locations={allLocations.filter((l) => l.businessUnitId === product.businessUnitId)}
+            myLocationIds={scope.user.locationIds}
+            stockLevels={stockLevels}
+            requestFor={requestFor}
+        />
+    );
 
-    const at = (variantId: string, locationId: string) => stockLevels.find((s) => s.variantId === variantId && s.locationId === locationId) ?? emptyStock(variantId, locationId);
+    if (!locations.length) return everywhere;
+
+    const at = (variantId: string, locationId: string) =>
+        stockLevels.find((s) => s.variantId === variantId && s.locationId === locationId) ?? emptyStock(variantId, locationId);
     const sum = (rows: { available: number; inTransit: number; returns: number; damaged: number }[]) =>
-        rows.reduce((a, s) => ({ available: a.available + s.available, inTransit: a.inTransit + s.inTransit, returns: a.returns + s.returns, damaged: a.damaged + s.damaged }), { available: 0, inTransit: 0, returns: 0, damaged: 0 });
+        rows.reduce(
+            (a, s) => ({
+                available: a.available + s.available,
+                inTransit: a.inTransit + s.inTransit,
+                returns: a.returns + s.returns,
+                damaged: a.damaged + s.damaged,
+            }),
+            { available: 0, inTransit: 0, returns: 0, damaged: 0 },
+        );
 
     const byLocation = locations.map((l) => ({ id: l.id, location: l, ...sum(variants.map((v) => at(v.id, l.id))) }));
     const shownLocs = loc === "all" ? locations : locations.filter((l) => l.id === loc);
@@ -377,36 +442,50 @@ const StockTab = ({ variants, scope, productBu }: { variants: Variant[]; scope: 
 
     return (
         <div className="flex flex-col gap-6">
-            <TableCard.Root size="sm" className="rounded-2xl">
-                <TableCard.Header title="By location" description="Only Available is sellable." />
-                <Table aria-label="Stock by location" size="sm">
-                    <Table.Header>
-                        <Table.Head label="Location" isRowHeader />
-                        <Table.Head label="Available" />
-                        <Table.Head label="In Transit" />
-                        <Table.Head label="Returns" />
-                        <Table.Head label="Damaged" />
-                    </Table.Header>
-                    <Table.Body items={byLocation}>
-                        {(r) => (
-                            <Table.Row id={r.id}>
-                                <Table.Cell>
-                                    <div className="flex min-w-48 items-center gap-2">
-                                        <span className="font-medium text-primary">{r.location.name}</span>
-                                        <Badge type="pill-color" size="sm" color={r.location.type === "warehouse" ? "blue" : "gray"}>
-                                            {r.location.type === "warehouse" ? "Warehouse" : "Store"}
-                                        </Badge>
-                                    </div>
-                                </Table.Cell>
-                                {stateCells(r)}
-                            </Table.Row>
-                        )}
-                    </Table.Body>
-                </Table>
-            </TableCard.Root>
+            {everywhere}
+            {locations.length > 1 && (
+                <TableCard.Root size="sm" className="rounded-2xl">
+                    <TableCard.Header title="Your locations by stock state" description="Only Available is sellable." />
+                    <Table aria-label="Stock by location" size="sm">
+                        <Table.Header>
+                            <Table.Head label="Location" isRowHeader />
+                            <Table.Head label="Available" />
+                            <Table.Head label="In Transit" />
+                            <Table.Head label="Returns" />
+                            <Table.Head label="Damaged" />
+                        </Table.Header>
+                        <Table.Body items={byLocation}>
+                            {(r) => (
+                                <Table.Row id={r.id}>
+                                    <Table.Cell>
+                                        <div className="flex min-w-48 items-center gap-2">
+                                            <span className="font-medium text-primary">{r.location.name}</span>
+                                            <Badge type="pill-color" size="sm" color={r.location.type === "warehouse" ? "blue" : "gray"}>
+                                                {r.location.type === "warehouse" ? "Warehouse" : "Store"}
+                                            </Badge>
+                                        </div>
+                                    </Table.Cell>
+                                    {stateCells(r)}
+                                </Table.Row>
+                            )}
+                        </Table.Body>
+                    </Table>
+                </TableCard.Root>
+            )}
 
             <div className="flex flex-col gap-3">
-                <FilterPills value={loc} onChange={setLoc} options={[{ id: "all", label: "All locations" }, ...locations.map((l) => ({ id: l.id, label: l.name }))]} />
+                {locations.length > 1 ? (
+                    <FilterPills
+                        value={loc}
+                        onChange={setLoc}
+                        options={[{ id: "all", label: "All your locations" }, ...locations.map((l) => ({ id: l.id, label: l.name }))]}
+                    />
+                ) : (
+                    <div>
+                        <h3 className="text-md font-semibold text-primary">{locations[0].name} by stock state</h3>
+                        <p className="text-sm text-tertiary">Only Available is sellable.</p>
+                    </div>
+                )}
                 <TableCard.Root size="sm" className="rounded-2xl">
                     <Table aria-label="Stock by variant" size="sm">
                         <Table.Header>
@@ -444,19 +523,28 @@ const ChannelsTab = ({ product, variants, scope }: { product: Product; variants:
     const connections = useAppStore((s) => s.connections);
     const listings = useAppStore((s) => s.listings);
     const visible = connections.filter(
-        (c) => c.businessUnitId === product.businessUnitId && scope.activeBusinessUnitIds.includes(c.businessUnitId) && (c.level === "business_unit" || !c.locationId || scope.locationIds.includes(c.locationId)),
+        (c) =>
+            c.businessUnitId === product.businessUnitId &&
+            scope.activeBusinessUnitIds.includes(c.businessUnitId) &&
+            (c.level === "business_unit" || !c.locationId || scope.locationIds.includes(c.locationId)),
     );
 
     if (!visible.length)
         return (
             <Card>
-                <Empty icon={LinkExternal01} title="No sales channels for this business unit" description="Connect Quickvee, Shopify or WooCommerce in Sales Channels." />
+                <Empty
+                    icon={LinkExternal01}
+                    title="No sales channels for this business unit"
+                    description="Connect Quickvee, Shopify or WooCommerce in Sales Channels."
+                />
             </Card>
         );
 
     return (
         <div className="flex flex-col gap-6">
-            <p className="text-sm text-tertiary">Listing status per connection. To push products, open the connection — pushing is done one connection at a time with a compliance check first.</p>
+            <p className="text-sm text-tertiary">
+                Listing status per connection. To push products, open the connection — pushing is done one connection at a time with a compliance check first.
+            </p>
             {visible.map((c) => {
                 const blocked = blockedFlagsFor(product, c);
                 return (
@@ -493,7 +581,12 @@ const ChannelsTab = ({ product, variants, scope }: { product: Product; variants:
                                             </p>
                                         </div>
                                         <div className="flex shrink-0 items-center gap-3">
-                                            {l?.lastPushedAt && <span className="text-xs text-tertiary">Pushed {timeAgo(l.lastPushedAt)}{l.lastPushedQty != null ? ` · qty ${l.lastPushedQty}` : ""}</span>}
+                                            {l?.lastPushedAt && (
+                                                <span className="text-xs text-tertiary">
+                                                    Pushed {timeAgo(l.lastPushedAt)}
+                                                    {l.lastPushedQty != null ? ` · qty ${l.lastPushedQty}` : ""}
+                                                </span>
+                                            )}
                                             <StatusBadge status={l?.status ?? "not_listed"} size="sm" />
                                         </div>
                                     </li>

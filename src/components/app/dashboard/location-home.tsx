@@ -63,7 +63,7 @@ export const StoreHome = ({ scope, store }: { scope: Scope; store: Location }) =
             <QuickActions
                 actions={[
                     { label: "Request stock", description: "Ask the warehouse or a store to send items", href: "/replenishment/requests/new", icon: Truck01 },
-                    { label: "Product lookup", description: "Find stock at every location", href: "/stock/lookup", icon: PackageSearch },
+                    { label: "Find a product", description: "Stock at every location", href: "/catalog/products", icon: PackageSearch },
                     { label: "Stock control", description: "Count shelves or adjust stock", href: "/stock/control", icon: ClipboardCheck },
                     {
                         label: "Confirm delivery",
@@ -148,7 +148,7 @@ export const WarehouseHome = ({ scope, warehouse }: { scope: Scope; warehouse: L
                     ...(scope.canSeePurchasing ? [{ label: "Receive a delivery", description: "Scan a vendor shipment in", href: "/purchasing/receiving", icon: Scan }] : []),
                     { label: "Store requests", description: "Pick, pack and ship", href: "/replenishment/requests", icon: Truck01 },
                     { label: "Stock control", description: "Count a section or adjust stock", href: "/stock/control", icon: ClipboardCheck },
-                    { label: "Product lookup", description: "Find stock at every location", href: "/stock/lookup", icon: PackageSearch },
+                    { label: "Find a product", description: "Stock at every location", href: "/catalog/products", icon: PackageSearch },
                 ]}
             />
 

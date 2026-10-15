@@ -120,15 +120,10 @@ const buildSteps = (scope: Scope, locationName: string | null): TourStep[] => {
             target: nav("/catalog/products"),
             title: "Products",
             body: scope.canManageCatalog
-                ? "One catalog for every business unit. Create products and variants with naming guidance and a live duplicate check, or bulk import a file."
-                : "The company catalog: products, variants, barcodes and prices.",
-        },
-        {
-            target: nav("/stock/lookup"),
-            title: "Product Lookup",
-            body: store
-                ? "See how many of an item every store and the warehouse has, and request it straight from there."
-                : "Search or scan any item to see its Available quantity at every store and warehouse.",
+                ? "Search or scan any item to see its stock at every store and warehouse. You also create products and variants here — with naming guidance and a live duplicate check — or bulk import a file."
+                : store
+                  ? "Search or scan any item to see how many every store and the warehouse have — and request it straight from there."
+                  : "Search or scan any item to see its details and how many are Available at every store and warehouse.",
         },
         {
             target: nav("/purchasing/orders"),
