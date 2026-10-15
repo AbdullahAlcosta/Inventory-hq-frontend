@@ -1,12 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "@untitledui/icons";
 import { Button as AriaButton } from "react-aria-components";
 import { Logo } from "@/components/app/logo";
-import { Button } from "@/components/base/buttons/button";
-import { Input } from "@/components/base/input/input";
 import { useHydrated } from "@/hooks/use-session";
 import { initials } from "@/lib/format";
 import { demoAccounts } from "@/mock/seed";
@@ -21,16 +18,9 @@ export default function LoginPage() {
     const employees = useAppStore((s) => s.employees);
     const companies = useAppStore((s) => s.companies);
     const login = useAppStore((s) => s.login);
-    const [email, setEmail] = useState("");
-    const [error, setError] = useState<string | null>(null);
 
-    // Demo accounts plus any company executive added later (so new companies can be tried out).
-    const accounts = [
-        ...demoAccounts.map((d) => ({ ...d, employee: employees.find((e) => e.id === d.employeeId)! })).filter((d) => d.employee),
-        ...employees
-            .filter((e) => e.role === "executive" && !demoAccounts.some((d) => d.employeeId === e.id))
-            .map((e) => ({ employeeId: e.id, headline: "Executive of a company added in Setup.", employee: e })),
-    ];
+    // One demo account per role.
+    const accounts = demoAccounts.map((d) => ({ ...d, employee: employees.find((e) => e.id === d.employeeId)! })).filter((d) => d.employee);
 
     const signIn = (id: string) => {
         login(id);
@@ -54,7 +44,7 @@ export default function LoginPage() {
             <div className="flex flex-1 items-start justify-center px-4 py-10 lg:items-center">
                 <div className="w-full max-w-2xl">
                     <h2 className="text-display-xs font-semibold text-primary">Sign in</h2>
-                    <p className="mt-1 text-md text-tertiary">Pick a demo account to see the app through that person’s role and assignment.</p>
+                    <p className="mt-1 text-md text-tertiary">Pick a role to see the app the way that person would.</p>
 
                     <div className="mt-6 grid gap-3 sm:grid-cols-2">
                         {hydrated &&
@@ -87,39 +77,7 @@ export default function LoginPage() {
                             })}
                     </div>
 
-                    <div className="my-6 flex items-center gap-3">
-                        <div className="h-px flex-1 bg-border-secondary" />
-                        <span className="text-xs text-quaternary">or sign in with email</span>
-                        <div className="h-px flex-1 bg-border-secondary" />
-                    </div>
-
-                    <form
-                        className="flex flex-col gap-3 sm:flex-row sm:items-start"
-                        onSubmit={(e) => {
-                            e.preventDefault();
-                            const match = employees.find((x) => x.email.toLowerCase() === email.trim().toLowerCase());
-                            if (!match) return setError("No employee with that email. Try one of the demo accounts above.");
-                            if (match.status === "disabled") return setError("This account is disabled.");
-                            signIn(match.id);
-                        }}
-                    >
-                        <Input
-                            className="flex-1"
-                            type="email"
-                            placeholder="you@company.com"
-                            aria-label="Email"
-                            value={email}
-                            onChange={(v) => {
-                                setEmail(v);
-                                setError(null);
-                            }}
-                            isInvalid={!!error}
-                            hint={error ?? "Any employee email works — there’s no password in the demo."}
-                        />
-                        <Button type="submit" size="lg">
-                            Continue
-                        </Button>
-                    </form>
+                    <p className="mt-6 text-sm text-tertiary">Each account opens with a short guided tour of what that role can do. You can skip it and replay it later from the account menu.</p>
                 </div>
             </div>
         </div>

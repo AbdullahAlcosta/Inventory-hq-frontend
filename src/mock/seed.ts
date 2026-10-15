@@ -94,13 +94,11 @@ export const employees: Employee[] = [
 
 /** Accounts offered on the mock login screen. */
 export const demoAccounts: { employeeId: string; headline: string }[] = [
-    { employeeId: "e_exec", headline: "Company overview or any single store/warehouse. Owns catalog, channels, setup and the monthly report." },
-    { employeeId: "e_mgr_store", headline: "Runs three smoke shops: stock control, requests from the warehouse or other stores, approvals for those stores." },
-    { employeeId: "e_mgr_wh", headline: "Runs the Smoke Shops Warehouse: vendors, purchase orders, receiving, reordering and the catalog." },
-    { employeeId: "e_assoc_store", headline: "Works at Alcosta Shop. Requests stock and confirms deliveries." },
-    { employeeId: "e_assoc_wh", headline: "Works the warehouse floor. Receives POs, picks, packs and ships." },
-    { employeeId: "e_bay_exec", headline: "Executive of a second company — shows strict company separation." },
-];
+    { employeeId: "e_exec", headline: "Sees the whole company or any single store/warehouse. Owns the catalog, sales channels, setup and the monthly report." },
+    { employeeId: "e_mgr_wh", headline: "Runs the Smoke Shops Warehouse: vendors, purchase orders, receiving, reordering, picking for stores and approving store transfers." },
+    { employeeId: "e_mgr_store", headline: "Runs three smoke shops: stock control, requests from the warehouse or other stores, and approvals for those stores." },
+    { employeeId: "e_assoc_store", headline: "Works at Alcosta Shop: checks stock, counts shelves, requests stock and confirms deliveries." },
+]
 
 /* ------------------------------------------------------------------ */
 /* Vendors                                                             */

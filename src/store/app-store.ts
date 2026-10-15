@@ -78,6 +78,8 @@ export interface Session {
      * "all" (whole company / all my locations), "bu:<businessUnitId>" or "loc:<locationId>".
      */
     context: string;
+    /** Users who finished or skipped the onboarding tour (so it only auto-starts once per person). */
+    toursCompleted?: string[];
 }
 
 export type ScanResult =
@@ -96,6 +98,7 @@ interface Actions {
     login: (userId: string) => void;
     logout: () => void;
     setContext: (context: string) => void;
+    completeTour: (userId: string) => void;
     resetDemo: () => void;
 
     /* setup */
@@ -293,6 +296,11 @@ export const useAppStore = create<AppState>()(
             setContext: (context) =>
                 set((s) => {
                     s.session.context = context;
+                }),
+            completeTour: (userId) =>
+                set((s) => {
+                    const done = s.session.toursCompleted ?? [];
+                    if (!done.includes(userId)) s.session.toursCompleted = [...done, userId];
                 }),
             resetDemo: () => set((s) => ({ ...initialData(), session: { ...s.session } })),
 

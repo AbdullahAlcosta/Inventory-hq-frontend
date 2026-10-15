@@ -13,6 +13,7 @@ import { cx } from "@/utils/cx";
 import { isPathAllowed, requiredLocation } from "./nav-config";
 import { RequireLocation } from "./require-location";
 import { Sidebar } from "./sidebar";
+import { OnboardingTour } from "./onboarding-tour";
 import { Toaster } from "./toast";
 
 export const AppShell = ({ children }: { children: ReactNode }) => {
@@ -120,6 +121,7 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
                 </main>
             </div>
             <Toaster />
+            <OnboardingTour scope={scope} />
         </div>
     );
 };

@@ -31,11 +31,12 @@ Sign in by picking a demo account. Each one shows the app through a different ro
 | Account | Role | Works on |
 | --- | --- | --- |
 | Bilal Ahmed | Executive | Company overview or any single store/warehouse; catalog, channels, setup, reports |
+| Daniel Ortiz | Warehouse Manager | Smoke Shops Warehouse: vendors, POs, receiving, reorder, catalog, fulfilling store requests, approving store transfers |
 | Sara Khan | Store Manager | Three smoke shops: stock control, requests (warehouse or other stores), approvals for those stores |
-| Daniel Ortiz | Warehouse Manager | Smoke Shops Warehouse: vendors, POs, receiving, reorder, catalog |
-| Priya Patel | Store Associate | Alcosta Shop (locked): request stock, confirm deliveries, counts & adjustments |
-| Marcus Lee | Warehouse Associate | Smoke Shops Warehouse (locked): receive, pick, pack, ship |
-| Lena Park | Executive, second company | Only Bayline data — shows company separation |
+| Priya Patel | Store Associate | Alcosta Shop (locked): stock, counts & adjustments, request stock, confirm deliveries |
+
+Each account starts with a short **guided tour** of what that role can do (Back / Next / Skip, arrow keys, Esc to skip).
+It shows once per person; replay it from **Take the tour** in the account menu at the bottom of the sidebar.
 
 ### Location switcher
 

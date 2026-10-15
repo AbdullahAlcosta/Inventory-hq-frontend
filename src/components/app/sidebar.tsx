@@ -3,7 +3,7 @@
 import { type ReactNode, useMemo } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Building07, Check, ChevronSelectorVertical, LogOut01, RefreshCw01, ShoppingBag01, SwitchHorizontal01 } from "@untitledui/icons";
+import { Building07, Check, ChevronSelectorVertical, Compass03, LogOut01, RefreshCw01, ShoppingBag01, SwitchHorizontal01 } from "@untitledui/icons";
 import { Button as AriaButton, Dialog as AriaDialog, DialogTrigger as AriaDialogTrigger, Popover as AriaPopover } from "react-aria-components";
 import type { Scope } from "@/hooks/use-session";
 import { initials } from "@/lib/format";
@@ -12,6 +12,7 @@ import { cx } from "@/utils/cx";
 import { BusinessUnitAvatar } from "./bu-avatar";
 import { Logo } from "./logo";
 import { navSections } from "./nav-config";
+import { useTour } from "./onboarding-tour";
 
 const roleLabel = (scope: Scope) => {
     const role = scope.user.role[0].toUpperCase() + scope.user.role.slice(1);
@@ -180,7 +181,9 @@ export const Sidebar = ({ scope, badges, onNavigate }: { scope: Scope; badges: R
             </div>
 
             <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-4 py-5 scrollbar-hide">
-                <LocationSwitcher scope={scope} />
+                <div data-tour="location">
+                    <LocationSwitcher scope={scope} />
+                </div>
                 {sections.map((section, i) => (
                     <div key={section.title ?? i} className="flex flex-col gap-0.5">
                         {section.title && <p className="px-3 pb-1 text-xs font-semibold tracking-wide text-gray-500 uppercase">{section.title}</p>}
@@ -191,6 +194,7 @@ export const Sidebar = ({ scope, badges, onNavigate }: { scope: Scope; badges: R
                                 <Link
                                     key={item.href}
                                     href={item.href}
+                                    data-tour={`nav:${item.href}`}
                                     onClick={onNavigate}
                                     className={cx(
                                         "group flex items-center gap-3 rounded-lg px-3 py-2 text-md font-medium outline-hidden transition duration-100 ease-linear focus-visible:ring-2 focus-visible:ring-white/40",
@@ -209,7 +213,10 @@ export const Sidebar = ({ scope, badges, onNavigate }: { scope: Scope; badges: R
 
             <div className="shrink-0 border-t border-white/10 p-4">
                 <AriaDialogTrigger>
-                    <AriaButton className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-2 py-2 text-left outline-hidden hover:bg-white/6 focus-visible:ring-2 focus-visible:ring-white/40">
+                    <AriaButton
+                        data-tour="account"
+                        className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-2 py-2 text-left outline-hidden hover:bg-white/6 focus-visible:ring-2 focus-visible:ring-white/40"
+                    >
                         <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-purple-600 text-sm font-semibold">{initials(scope.user.name)}</span>
                         <span className="min-w-0 flex-1">
                             <span className="block truncate text-sm font-semibold">{scope.user.name}</span>
@@ -226,6 +233,15 @@ export const Sidebar = ({ scope, badges, onNavigate }: { scope: Scope; badges: R
                                         <p className="text-xs text-tertiary">{scope.user.email}</p>
                                     </div>
                                     <div className="my-1 h-px bg-border-secondary" />
+                                    <MenuButton
+                                        icon={Compass03}
+                                        label="Take the tour"
+                                        onPress={() => {
+                                            close();
+                                            onNavigate?.();
+                                            useTour.getState().start();
+                                        }}
+                                    />
                                     <MenuButton
                                         icon={SwitchHorizontal01}
                                         label="Switch demo user"
