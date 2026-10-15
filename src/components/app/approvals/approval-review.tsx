@@ -11,6 +11,7 @@ import { TextArea } from "@/components/base/textarea/textarea";
 import { formatDateTime, timeAgo } from "@/lib/format";
 import type { Approval } from "@/lib/types";
 import { type ApprovalDecision, useAppStore } from "@/store/app-store";
+import { InvoiceIssueDetail } from "@/components/app/purchasing/invoice-issue-detail";
 import { approvalTypeMeta } from "./approval-meta";
 import { AdjustmentDetail, CountDetail, DuplicateDetail, FieldGrid, MismatchDetail, PartialPoDetail, ReorderDetail, ScopedLink, Section, SyncDetail, UnexpectedDetail, TransferDetail } from "./approval-details";
 
@@ -179,6 +180,22 @@ const ReviewBody = ({ approval, onClose, onPosCreated }: { approval: Approval; o
                     </Button>
                     <Button size="lg" onPress={() => decide({ action: "approve" }, "Transfer approved — the sending store can ship it")}>
                         Approve transfer
+                    </Button>
+                </>
+            );
+            break;
+        case "invoice_issue":
+            detail = <InvoiceIssueDetail invoiceId={p.invoiceId} />;
+            actions = (
+                <>
+                    <Button color="secondary" size="lg" onPress={() => decide({ action: "approve" }, "Invoice resolved")}>
+                        Resolve
+                    </Button>
+                    <Button color="secondary" size="lg" onPress={() => decide({ action: "dispute" }, "Marked as disputed with the vendor")}>
+                        Dispute with vendor
+                    </Button>
+                    <Button size="lg" onPress={() => decide({ action: "accept_costs" })}>
+                        Accept &amp; update costs
                     </Button>
                 </>
             );

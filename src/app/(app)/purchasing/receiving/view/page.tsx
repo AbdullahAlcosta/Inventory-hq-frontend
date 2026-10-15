@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/app/page-header";
 import { UnitsProgress } from "@/components/app/purchasing/flow-ui";
 import { expectedUnits, poTotals, productForVariant } from "@/components/app/purchasing/po-utils";
 import { ReceivingLine } from "@/components/app/purchasing/receiving-line";
+import { InvoiceScan } from "@/components/app/purchasing/invoice-scan";
 import { ScanInput, type ScanFeedback, type SimulatedCode } from "@/components/app/scan-input";
 import { StatusBadge } from "@/components/app/status-badge";
 import { toast } from "@/components/app/toast";
@@ -272,6 +273,8 @@ function ReceivePOPage() {
                     </Card>
                 </div>
             </div>
+
+            <InvoiceScan vendorId={po.vendorId} destinationId={po.warehouseId} po={po} />
 
             {/* Finish bar — sticky at the bottom on phones/tablets */}
             <div className="fixed inset-x-0 bottom-0 z-10 border-t border-secondary bg-primary/95 px-4 py-3 backdrop-blur lg:static lg:rounded-2xl lg:px-6 lg:py-4 lg:ring-1 lg:ring-secondary">
